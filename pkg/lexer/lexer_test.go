@@ -10,6 +10,9 @@ func TestLexerNextToken(t *testing.T) {
 	input := `
 PROGRAM HelloWorld;
 
+LABEL
+	foobar;
+
 VAR
 	X := 1;
 	time := 2.1;
@@ -41,6 +44,7 @@ END.
 		{token.PROGRAM, "PROGRAM"},
 		{token.IDENT, "HelloWorld"},
 		{token.SEMICOLON, ";"},
+		{token.LABEL, "LABEL"}, {token.IDENT, "foobar"}, {token.SEMICOLON, ";"},
 		{token.VAR, "VAR"},
 		{token.IDENT, "X"}, {token.NAMED, ":="}, {token.NUMBER, "1"}, {token.SEMICOLON, ";"},
 		{token.IDENT, "time"}, {token.NAMED, ":="}, {token.NUMBER, "2.1"}, {token.SEMICOLON, ";"},
