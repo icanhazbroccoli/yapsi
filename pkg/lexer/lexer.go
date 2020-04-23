@@ -8,13 +8,6 @@ import (
 	"yapsi/pkg/token"
 )
 
-type StringMode uint8
-
-const (
-	SINGLELINE StringMode = iota
-	MULTILINE
-)
-
 type Lexer struct {
 	reader     *strings.Reader
 	line, col  int
@@ -33,8 +26,8 @@ func New(reader *strings.Reader) (*Lexer, error) {
 
 func (lex *Lexer) NextToken() (token.Token, error) {
 	var tok token.Token
-	var err error
 
+Begin:
 	lex.eatWhitespace()
 
 	switch lex.read {
@@ -77,7 +70,17 @@ func (lex *Lexer) NextToken() (token.Token, error) {
 	case ']':
 		tok = newToken(token.RBRACKET, lex.read)
 	case '.':
-		tok = newToken(token.PERIOD, lex.read)
+		switch lex.peek {
+		case '.':
+			read := lex.read
+			if err := lex.next(); err != nil {
+				return tok, err
+			}
+			tok.Type = token.DOTDOT
+			tok.Literal = string(read) + string(lex.read)
+		default:
+			tok = newToken(token.PERIOD, lex.read)
+		}
 	case ',':
 		tok = newToken(token.COMMA, lex.read)
 	case ':':
@@ -97,27 +100,55 @@ func (lex *Lexer) NextToken() (token.Token, error) {
 	case '^':
 		tok = newToken(token.PTR, lex.read)
 	case '(':
-		tok = newToken(token.LPAREN, lex.read)
+		switch lex.peek {
+		case '*':
+			if err := lex.next(); err != nil {
+				return tok, err
+			}
+			if err := lex.skipComment(); err != nil {
+				return tok, err
+			}
+			goto Begin
+		default:
+			tok = newToken(token.LPAREN, lex.read)
+		}
 	case ')':
 		tok = newToken(token.RPAREN, lex.read)
 	case '\'':
-		tok, err = lex.readString(SINGLELINE)
+		lit, err := lex.readString()
 		if err != nil {
 			return tok, err
 		}
-	case '"':
-		tok, err = lex.readString(MULTILINE)
-		if err != nil {
+		tok.Type = token.STRING
+		tok.Literal = lit
+	case '{':
+		if err := lex.skipComment(); err != nil {
 			return tok, err
 		}
+		goto Begin
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
 		return tok, nil
 	default:
-		tok, err = lex.readIdentOrNum()
-		if err != nil {
-			return tok, err
+		if isDigit(lex.read) {
+			lit, err := lex.readNumber()
+			if err != nil {
+				return tok, err
+			}
+			tok.Type = token.NUMBER
+			tok.Literal = lit
+		} else if isLetter(lex.read) {
+			lit, err := lex.readIdentifier()
+			if err != nil {
+				return tok, err
+			}
+			tok.Type = token.LookupIdent(lit)
+			tok.Literal = lit
+		} else {
+			tok.Type = token.ILLEGAL
+			return tok, lex.error(fmt.Sprintf(
+				"Illegal token: %c", lex.read))
 		}
 	}
 	if err := lex.next(); err != nil {
@@ -126,91 +157,74 @@ func (lex *Lexer) NextToken() (token.Token, error) {
 	return tok, nil
 }
 
-func (lex *Lexer) readIdentOrNum() (token.Token, error) {
-	if isDigit(lex.read) {
-		return lex.readNumber()
-	} else {
-		return lex.readIdent()
-	}
-}
-
-func (lex *Lexer) readString(sm StringMode) (token.Token, error) {
+func (lex *Lexer) readNumber() (string, error) {
 	var buf bytes.Buffer
-	var tok token.Token
-	var sentinel rune
-	switch sm {
-	case SINGLELINE:
-		sentinel = '\''
-	case MULTILINE:
-		sentinel = '"'
-	default:
-		return tok, lex.error(fmt.Sprintf(
-			"unknown string mode: %v", sm))
-	}
-	if err := lex.next(); err != nil {
-		return tok, err
-	}
-	for {
-		if lex.read == '\n' && sm != MULTILINE {
-			return tok, lex.error(
-				"unexpected newline in a non-multiline string literal")
-		}
-		buf.WriteRune(lex.read)
-		if !lex.hasNext() || lex.peek == sentinel {
-			break
-		}
-		if err := lex.next(); err != nil {
-			return tok, err
-		}
-	}
-
-	if lex.peek != sentinel {
-		return tok, lex.error("missing closing string quote")
-	}
-	if err := lex.next(); err != nil {
-		return tok, err
-	}
-	tok.Type = token.STRING
-	tok.Literal = buf.String()
-	return tok, nil
-}
-
-func (lex *Lexer) readNumber() (token.Token, error) {
-	var buf bytes.Buffer
-	var tok token.Token
 	for {
 		buf.WriteRune(lex.read)
 		if !lex.hasNext() || !(isDigit(lex.peek) ||
-			lex.peek == '.' || lex.peek == 'b' || lex.peek == 'x') {
+			lex.peek == '.' || lex.peek == 'e' || lex.peek == 'E') {
 			break
 		}
 		if err := lex.next(); err != nil {
-			return tok, err
+			return "", err
 		}
 	}
-
-	tok.Type = token.NUMBER
-	tok.Literal = buf.String()
-	return tok, nil
+	return buf.String(), nil
 }
 
-func (lex *Lexer) readIdent() (token.Token, error) {
-	var tok token.Token
+func (lex *Lexer) readIdentifier() (string, error) {
 	var buf bytes.Buffer
 	for {
 		buf.WriteRune(lex.read)
-		if !lex.hasNext() || !isAlphaNum(lex.peek) {
+		if !lex.hasNext() || !isAlphanumeric(lex.peek) {
 			break
 		}
 		if err := lex.next(); err != nil {
-			return tok, err
+			return "", err
 		}
 	}
+	return buf.String(), nil
+}
 
-	tok.Literal = buf.String()
-	tok.Type = token.LookupIdent(tok.Literal)
+func (lex *Lexer) readString() (string, error) {
+	var buf bytes.Buffer
+	for lex.hasNext() && lex.peek != '\'' {
+		if err := lex.next(); err != nil {
+			return "", err
+		}
+		buf.WriteRune(lex.read)
+	}
+	if err := lex.next(); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
 
-	return tok, nil
+func (lex *Lexer) skipComment() error {
+	shouldBreak := false
+	if err := lex.next(); err != nil {
+		return err
+	}
+	for !shouldBreak {
+		if !lex.hasNext() {
+			return lex.error("No comment closing token found")
+		}
+		switch lex.read {
+		case '}':
+			shouldBreak = true
+		case '*':
+			if lex.peek == ')' {
+				if err := lex.next(); err != nil {
+					return err
+				}
+				shouldBreak = true
+			}
+		}
+		if err := lex.next(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (lex *Lexer) hasNext() bool {
@@ -255,9 +269,12 @@ func isDigit(r rune) bool {
 	return r >= '0' && r <= '9'
 }
 
-func isAlphaNum(r rune) bool {
-	return isDigit(r) || (r >= 'a' && r <= 'z') ||
-		(r >= 'A' && r <= 'Z') || (r == '_')
+func isLetter(r rune) bool {
+	return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z')
+}
+
+func isAlphanumeric(r rune) bool {
+	return isLetter(r) || isDigit(r)
 }
 
 func (lex *Lexer) error(msg string) error {
