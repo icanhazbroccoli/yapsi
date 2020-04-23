@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"strings"
 
 	"yapsi/pkg/token"
 )
@@ -35,9 +36,8 @@ func (p *Program) TokenLiteral() string {
 
 func (p *Program) String() string {
 	var buf bytes.Buffer
-	buf.WriteString(token.PROGRAM + " " + p.Name + token.SEMICOLON)
 	for _, stmt := range p.Statements {
-		buf.WriteString(stmt.String())
+		buf.WriteString(stmt.String() + "\n")
 	}
 	return buf.String()
 }
@@ -50,3 +50,36 @@ type Identifier struct {
 func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
 func (i *Identifier) String() string       { return i.Value }
+
+type ProgramDeclarationStatement struct {
+	Token token.Token
+	Name  string
+}
+
+func (pds *ProgramDeclarationStatement) statementNode()       {}
+func (pds *ProgramDeclarationStatement) TokenLiteral() string { return pds.Token.Literal }
+func (pds *ProgramDeclarationStatement) String() string {
+	return "PROGRAM " + pds.Name + ";"
+}
+
+type LabelStatement struct {
+	Token  token.Token
+	Labels []*Identifier
+}
+
+func (ls *LabelStatement) statementNode()       {}
+func (ls *LabelStatement) TokenLiteral() string { return ls.Token.Literal }
+func (ls *LabelStatement) String() string {
+	var buf bytes.Buffer
+	tab := "    "
+	if len(ls.Labels) > 0 {
+		buf.WriteString("LABEL\n")
+		labels := make([]string, 0, len(ls.Labels))
+		for _, label := range ls.Labels {
+			labels = append(labels, tab+label.String())
+		}
+		buf.WriteString(strings.Join(labels, ",\n"))
+		buf.WriteString(";")
+	}
+	return buf.String()
+}

@@ -24,69 +24,107 @@ type Parser struct {
 	infixParseFns  map[token.TokenType]infixParseFn
 }
 
-func New(lexer *lexer.Lexer) (*Parser, error) {
+func New(lexer *lexer.Lexer) *Parser {
 	p := &Parser{
 		lexer:          lexer,
 		prefixParseFns: make(map[token.TokenType]prefixParseFn),
 		infixParseFns:  make(map[token.TokenType]infixParseFn),
 		errors:         make([]string, 0),
 	}
+	p.nextToken()
+	p.nextToken()
 
-	if err := p.nextToken(); err != nil {
-		return nil, err
-	}
-
-	return p, nil
+	return p
 }
 
-func (p *Parser) ParseProgram() (*ast.Program, error) {
-	program, err := p.parseProgramDeclaration()
-	if err != nil {
-		return nil, err
+func (p *Parser) hasNextToken() bool {
+	if len(p.errors) > 0 {
+		return false
 	}
-	statements := []ast.Statement{}
-	//for p.readToken.Type != token.EOF &&
-	// p.readToken.Type != token.PERIOD {
-	//	statement := p.parseStatement()
-	//	if statement != nil {
-	//		statements = append(statements, statement)
-	//	}
-	//	if err := p.nextToken(); err != nil {
-	//		return nil, err
-	//	}
-	//}
-	program.Statements = statements
-	return program, nil
+	return p.readToken.Type != token.EOF
 }
 
-func (p *Parser) parseProgramDeclaration() (*ast.Program, error) {
+func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
-	if !p.expectPeek(token.PROGRAM) {
-		return nil, p.Errors()
-	}
-	if !p.expectPeek(token.IDENT) {
-		return nil, p.Errors()
-	}
-	program.Name = p.readToken.Literal
-	if !p.expectPeek(token.SEMICOLON) {
-		return nil, p.Errors()
-	}
-	for p.peekTokenIs(token.SEMICOLON) {
-		if err := p.nextToken(); err != nil {
-			return nil, err
+	statements := []ast.Statement{}
+	for p.hasNextToken() {
+		statement := p.parseStatement()
+		if statement != nil {
+			statements = append(statements, statement)
 		}
 	}
-	return program, nil
+	program.Statements = statements
+	return program
 }
 
-func (p *Parser) nextToken() error {
-	read := p.peekToken
-	peek, err := p.lexer.NextToken()
-	if err != nil {
+func (p *Parser) parseStatement() ast.Statement {
+	switch p.readToken.Type {
+	case token.PROGRAM:
+		return p.parseProgramDeclarationStatement()
+	case token.LABEL:
+		return p.parseLabelStatement()
+	default:
+		return p.parseExpressionStatement()
+	}
+}
+
+func (p *Parser) parseLabelStatement() *ast.LabelStatement {
+	ls := &ast.LabelStatement{}
+	ls.Token = p.readToken
+	labels := []*ast.Identifier{}
+	for {
+		if !p.expectPeek(token.IDENT) {
+			return nil
+		}
+		label := &ast.Identifier{
+			Token: p.readToken,
+			Value: p.readToken.Literal,
+		}
+		labels = append(labels, label)
+		if p.peekTokenIs(token.SEMICOLON) {
+			break
+		}
+		if !p.expectPeek(token.COMMA) {
+			return nil
+		}
+	}
+	if !p.expectPeek(token.SEMICOLON) {
 		return nil
 	}
-	p.readToken, p.peekToken = read, peek
+	p.nextToken()
+	ls.Labels = labels
+
+	return ls
+}
+
+func (p *Parser) parseExpressionStatement() ast.Statement {
+	p.errors = append(p.errors, "not implemented: "+p.readToken.Literal)
 	return nil
+}
+
+func (p *Parser) parseProgramDeclarationStatement() *ast.ProgramDeclarationStatement {
+	decl := &ast.ProgramDeclarationStatement{}
+	decl.Token = p.readToken
+	if !p.expectPeek(token.IDENT) {
+		return nil
+	}
+	decl.Name = p.readToken.Literal
+	if !p.expectPeek(token.SEMICOLON) {
+		return nil
+	}
+	for p.readTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+	return decl
+}
+
+func (p *Parser) nextToken() {
+	if p.readTokenIs(token.EOF) {
+		return
+	}
+	read := p.peekToken
+	peek := p.lexer.NextToken()
+	p.readToken, p.peekToken = read, peek
 }
 
 func (p *Parser) expectPeek(tt token.TokenType) bool {
@@ -103,13 +141,17 @@ func (p *Parser) peekTokenIs(tt token.TokenType) bool {
 	return p.peekToken.Type == tt
 }
 
+func (p *Parser) readTokenIs(tt token.TokenType) bool {
+	return p.readToken.Type == tt
+}
+
 func (p *Parser) peekError(tt token.TokenType) {
 	msg := fmt.Sprintf("expected next token to be: %s, got: %s",
 		tt, p.peekToken.Type)
 	p.errors = append(p.errors, msg)
 }
 
-func (p *Parser) Errors() error {
+func (p *Parser) Error() error {
 	if len(p.errors) == 0 {
 		return nil
 	}

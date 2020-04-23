@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"bufio"
 	"strings"
 	"testing"
 	"yapsi/pkg/token"
@@ -75,17 +76,11 @@ END.
 
 	reader := strings.NewReader(input)
 
-	lex, err := New(reader)
-	if err != nil {
-		t.Fatalf("Unexpected New() error: %s", err)
-	}
+	lex := New(bufio.NewReader(reader))
 
 	for _, tt := range tests {
-		tok, err := lex.NextToken()
+		tok := lex.NextToken()
 		line, col := lex.pos()
-		if err != nil {
-			t.Fatalf("Unexpected error: %s", err)
-		}
 		if tok.Type != tt.expType {
 			t.Fatalf("Unexpected token type around pos: line: %d, col: %d: got=%#v, want: %#v",
 				line, col, tok.Type, tt.expType)

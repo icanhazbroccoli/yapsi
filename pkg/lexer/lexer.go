@@ -1,30 +1,30 @@
 package lexer
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
-	"strings"
 	"yapsi/pkg/token"
 )
 
 type Lexer struct {
-	reader     *strings.Reader
+	reader     *bufio.Reader
 	line, col  int
 	read, peek rune
 }
 
-func New(reader *strings.Reader) (*Lexer, error) {
+func New(reader *bufio.Reader) *Lexer {
 	lex := &Lexer{
 		reader: reader,
 	}
 	lex.next()
 	lex.next()
 	lex.line, lex.col = 1, 1
-	return lex, nil
+	return lex
 }
 
-func (lex *Lexer) NextToken() (token.Token, error) {
+func (lex *Lexer) NextToken() token.Token {
 	var tok token.Token
 
 Begin:
@@ -45,9 +45,7 @@ Begin:
 		switch lex.peek {
 		case '=':
 			read := lex.read
-			if err := lex.next(); err != nil {
-				return tok, err
-			}
+			lex.next()
 			tok.Type = token.LTEQL
 			tok.Literal = string(read) + string(lex.read)
 		default:
@@ -57,9 +55,7 @@ Begin:
 		switch lex.peek {
 		case '=':
 			read := lex.read
-			if err := lex.next(); err != nil {
-				return tok, err
-			}
+			lex.next()
 			tok.Type = token.GTEQL
 			tok.Literal = string(read) + string(lex.read)
 		default:
@@ -73,9 +69,7 @@ Begin:
 		switch lex.peek {
 		case '.':
 			read := lex.read
-			if err := lex.next(); err != nil {
-				return tok, err
-			}
+			lex.next()
 			tok.Type = token.DOTDOT
 			tok.Literal = string(read) + string(lex.read)
 		default:
@@ -87,9 +81,7 @@ Begin:
 		switch lex.peek {
 		case '=':
 			read := lex.read
-			if err := lex.next(); err != nil {
-				return tok, err
-			}
+			lex.next()
 			tok.Type = token.NAMED
 			tok.Literal = string(read) + string(lex.read)
 		default:
@@ -102,12 +94,8 @@ Begin:
 	case '(':
 		switch lex.peek {
 		case '*':
-			if err := lex.next(); err != nil {
-				return tok, err
-			}
-			if err := lex.skipComment(); err != nil {
-				return tok, err
-			}
+			lex.next()
+			lex.skipComment()
 			goto Begin
 		default:
 			tok = newToken(token.LPAREN, lex.read)
@@ -115,49 +103,35 @@ Begin:
 	case ')':
 		tok = newToken(token.RPAREN, lex.read)
 	case '\'':
-		lit, err := lex.readString()
-		if err != nil {
-			return tok, err
-		}
 		tok.Type = token.STRING
-		tok.Literal = lit
+		tok.Literal = lex.readString()
 	case '{':
-		if err := lex.skipComment(); err != nil {
-			return tok, err
-		}
+		lex.skipComment()
 		goto Begin
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
-		return tok, nil
+		return tok
 	default:
 		if isDigit(lex.read) {
-			lit, err := lex.readNumber()
-			if err != nil {
-				return tok, err
-			}
 			tok.Type = token.NUMBER
-			tok.Literal = lit
+			tok.Literal = lex.readNumber()
 		} else if isLetter(lex.read) {
-			lit, err := lex.readIdentifier()
-			if err != nil {
-				return tok, err
-			}
+			lit := lex.readIdentifier()
 			tok.Type = token.LookupIdent(lit)
 			tok.Literal = lit
 		} else {
 			tok.Type = token.ILLEGAL
-			return tok, lex.error(fmt.Sprintf(
+			lex.error(fmt.Sprintf(
 				"Illegal token: %c", lex.read))
 		}
 	}
-	if err := lex.next(); err != nil {
-		return tok, err
-	}
-	return tok, nil
+	lex.next()
+
+	return tok
 }
 
-func (lex *Lexer) readNumber() (string, error) {
+func (lex *Lexer) readNumber() string {
 	var buf bytes.Buffer
 	for {
 		buf.WriteRune(lex.read)
@@ -165,73 +139,58 @@ func (lex *Lexer) readNumber() (string, error) {
 			lex.peek == '.' || lex.peek == 'e' || lex.peek == 'E') {
 			break
 		}
-		if err := lex.next(); err != nil {
-			return "", err
-		}
+		lex.next()
 	}
-	return buf.String(), nil
+	return buf.String()
 }
 
-func (lex *Lexer) readIdentifier() (string, error) {
+func (lex *Lexer) readIdentifier() string {
 	var buf bytes.Buffer
 	for {
 		buf.WriteRune(lex.read)
 		if !lex.hasNext() || !isAlphanumeric(lex.peek) {
 			break
 		}
-		if err := lex.next(); err != nil {
-			return "", err
-		}
+		lex.next()
 	}
-	return buf.String(), nil
+	return buf.String()
 }
 
-func (lex *Lexer) readString() (string, error) {
+func (lex *Lexer) readString() string {
 	var buf bytes.Buffer
 	for lex.hasNext() && lex.peek != '\'' {
-		if err := lex.next(); err != nil {
-			return "", err
-		}
+		lex.next()
 		buf.WriteRune(lex.read)
 	}
-	if err := lex.next(); err != nil {
-		return "", err
-	}
-	return buf.String(), nil
+	lex.next()
+	return buf.String()
 }
 
-func (lex *Lexer) skipComment() error {
+func (lex *Lexer) skipComment() {
 	shouldBreak := false
-	if err := lex.next(); err != nil {
-		return err
-	}
+	lex.next()
 	for !shouldBreak {
 		if !lex.hasNext() {
-			return lex.error("No comment closing token found")
+			break
 		}
 		switch lex.read {
 		case '}':
 			shouldBreak = true
 		case '*':
 			if lex.peek == ')' {
-				if err := lex.next(); err != nil {
-					return err
-				}
+				lex.next()
 				shouldBreak = true
 			}
 		}
-		if err := lex.next(); err != nil {
-			return err
-		}
+		lex.next()
 	}
-	return nil
 }
 
 func (lex *Lexer) hasNext() bool {
 	return lex.read != 0
 }
 
-func (lex *Lexer) next() error {
+func (lex *Lexer) next() {
 	read, peek := lex.read, lex.peek
 	read = peek
 	lex.col++
@@ -243,12 +202,11 @@ func (lex *Lexer) next() error {
 	peek, _, err = lex.reader.ReadRune()
 	if err != nil {
 		if err != io.EOF {
-			return err
+			panic(err.Error())
 		}
 		peek = 0
 	}
 	lex.read, lex.peek = read, peek
-	return nil
 }
 
 func (lex *Lexer) eatWhitespace() {
@@ -278,8 +236,8 @@ func isAlphanumeric(r rune) bool {
 }
 
 func (lex *Lexer) error(msg string) error {
-	return fmt.Errorf("Syntax error on line: %d, pos: %d: %s",
-		lex.line, lex.col, msg)
+	panic(fmt.Sprintf("Syntax error on line: %d, pos: %d: %s",
+		lex.line, lex.col, msg))
 }
 
 func (lex *Lexer) pos() (int, int) {
