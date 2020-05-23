@@ -8,11 +8,18 @@ import (
 	"yapsi/pkg/token"
 )
 
+type Interface interface {
+	NextToken() token.Token
+	Pos() (int, int)
+}
+
 type Lexer struct {
 	reader     *bufio.Reader
 	line, col  int
 	read, peek rune
 }
+
+var _ Interface = (*Lexer)(nil)
 
 func New(reader *bufio.Reader) *Lexer {
 	lex := &Lexer{
@@ -131,6 +138,10 @@ Begin:
 	return tok
 }
 
+func (lex *Lexer) Pos() (int, int) {
+	return lex.line, lex.col
+}
+
 func (lex *Lexer) readNumber() string {
 	var buf bytes.Buffer
 	for {
@@ -238,10 +249,6 @@ func isAlphanumeric(r rune) bool {
 func (lex *Lexer) error(msg string) error {
 	panic(fmt.Sprintf("Syntax error on line: %d, pos: %d: %s",
 		lex.line, lex.col, msg))
-}
-
-func (lex *Lexer) pos() (int, int) {
-	return lex.line, lex.col
 }
 
 func newToken(t token.TokenType, l rune) token.Token {

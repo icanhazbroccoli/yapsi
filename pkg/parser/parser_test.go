@@ -1,79 +1,151 @@
 package parser
 
 import (
-	"bufio"
-	"reflect"
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"yapsi/pkg/ast"
 	"yapsi/pkg/lexer"
 	"yapsi/pkg/token"
 )
 
-func TestParsingProgramDeclarationStatement(t *testing.T) {
-	input := `PROGRAM foo;`
-	reader := newReader(input)
-	lex := lexer.New(reader)
-	p := New(lex)
-	stmt := p.parseProgramDeclarationStatement()
-	checkParserErrors(t, p)
-	expectStatement(t, stmt, &ast.ProgramDeclarationStatement{
-		Token: token.Token{
-			Type:    token.PROGRAM,
-			Literal: "PROGRAM",
-		},
-		Name: "foo",
-	})
+type TestLexer struct {
+	tokens []token.Token
+	cur    int
 }
 
-func TestParsingLabelStatement(t *testing.T) {
-	input := `
-LABEL
-	foo1,
-	bar2,
-	baz3;
-	`
-	reader := newReader(input)
-	lex := lexer.New(reader)
-	p := New(lex)
-	stmt := p.parseLabelStatement()
-	expectStatement(t, stmt, &ast.LabelStatement{
-		Token: token.Token{
-			Type:    token.LABEL,
-			Literal: "LABEL",
-		},
-		Labels: []*ast.Identifier{
-			newIdent("foo1"),
-			newIdent("bar2"),
-			newIdent("baz3"),
-		},
-	})
-}
+var _ lexer.Interface = (*TestLexer)(nil)
 
-func newIdent(name string) *ast.Identifier {
-	return &ast.Identifier{
-		Token: token.Token{
-			Type:    token.IDENT,
-			Literal: name,
-		},
-		Value: name,
+func NewTestLexer(tokens []token.Token) *TestLexer {
+	return &TestLexer{
+		tokens: tokens,
 	}
 }
 
-func newReader(input string) *bufio.Reader {
-	return bufio.NewReader(strings.NewReader(input))
+func (l *TestLexer) NextToken() token.Token {
+	if l.cur >= len(l.tokens) {
+		return token.Token{
+			Type: token.EOF,
+		}
+	}
+	peek := l.tokens[l.cur]
+	l.cur++
+	return peek
 }
 
-func expectStatement(t *testing.T, got, want ast.Statement) {
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("unexpected statement:\ngot=%s\nwant=%s",
-			got.String(), want.String())
+func (l *TestLexer) Pos() (int, int) {
+	return 0, l.cur
+}
+
+func newToken(t token.TokenType, l string) token.Token {
+	return token.Token{
+		Type:    t,
+		Literal: l,
 	}
 }
 
-func checkParserErrors(t *testing.T, p *Parser) {
-	if err := p.Error(); err != nil {
-		t.Fatalf(err.Error())
+func TestParseVariables(t *testing.T) {
+	tests := []struct {
+		input    []token.Token
+		wantVars []ast.Variable
+		wantErr  error
+	}{
+		{
+			input:    []token.Token{},
+			wantVars: []ast.Variable{},
+			wantErr:  nil,
+		},
+		{
+			input: []token.Token{
+				newToken(token.VAR, "var"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.COLON, ":"),
+				newToken(token.IDENT, "bar"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantVars: []ast.Variable{
+				ast.Variable{
+					Identifier: ast.VarIdentifier("foo"),
+					Type:       ast.TypeIdentifier("bar"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			input: []token.Token{
+				newToken(token.VAR, "var"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "bar"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "baz"),
+				newToken(token.COLON, ":"),
+				newToken(token.IDENT, "boo"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantVars: []ast.Variable{
+				ast.Variable{
+					Identifier: ast.VarIdentifier("foo"),
+					Type:       ast.TypeIdentifier("boo"),
+				},
+				ast.Variable{
+					Identifier: ast.VarIdentifier("bar"),
+					Type:       ast.TypeIdentifier("boo"),
+				},
+				ast.Variable{
+					Identifier: ast.VarIdentifier("baz"),
+					Type:       ast.TypeIdentifier("boo"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			input: []token.Token{
+				newToken(token.VAR, "var"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "bar"),
+				newToken(token.COLON, ":"),
+				newToken(token.IDENT, "Integer"),
+				newToken(token.SEMICOLON, ";"),
+				newToken(token.IDENT, "baz"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "boo"),
+				newToken(token.COLON, ":"),
+				newToken(token.IDENT, "Real"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantVars: []ast.Variable{
+				ast.Variable{
+					Identifier: ast.VarIdentifier("foo"),
+					Type:       ast.TypeIdentifier("Integer"),
+				},
+				ast.Variable{
+					Identifier: ast.VarIdentifier("bar"),
+					Type:       ast.TypeIdentifier("Integer"),
+				},
+				ast.Variable{
+					Identifier: ast.VarIdentifier("baz"),
+					Type:       ast.TypeIdentifier("Real"),
+				},
+				ast.Variable{
+					Identifier: ast.VarIdentifier("boo"),
+					Type:       ast.TypeIdentifier("Real"),
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		vars, err := p.parseVariables()
+		assert.Equal(t, err, tt.wantErr)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, vars, tt.wantVars)
 	}
 }

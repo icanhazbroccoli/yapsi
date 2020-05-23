@@ -80,7 +80,7 @@ END.
 
 	for _, tt := range tests {
 		tok := lex.NextToken()
-		line, col := lex.pos()
+		line, col := lex.Pos()
 		if tok.Type != tt.expType {
 			t.Fatalf("Unexpected token type around pos: line: %d, col: %d: got=%#v, want: %#v",
 				line, col, tok.Type, tt.expType)
