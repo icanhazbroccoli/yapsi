@@ -166,8 +166,26 @@ func (p *Parser) parseVariables() ([]ast.Variable, error) {
 }
 
 func (p *Parser) parseLabels() ([]ast.Label, error) {
-	//TODO
-	panic("not implemented")
+	labels := []ast.Label{}
+	if !p.match(token.LABEL) {
+		return labels, nil
+	}
+	for {
+		ident, err := p.consume(token.IDENT, token.NUMBER)
+		if err != nil {
+			return nil, err
+		}
+		labels = append(labels, ast.Label{
+			Identifier: ast.LabelIdentifier(ident.Literal),
+		})
+		if !p.match(token.COMMA) {
+			break
+		}
+	}
+	if _, err := p.consume(token.SEMICOLON); err != nil {
+		return nil, err
+	}
+	return labels, nil
 }
 
 func (p *Parser) parseConstants() ([]ast.Constant, error) {
@@ -212,13 +230,15 @@ func (p *Parser) previous() token.Token {
 	return p.prev
 }
 
-func (p *Parser) consume(t token.TokenType) (token.Token, error) {
-	if p.check(t) {
-		return p.advance(), nil
+func (p *Parser) consume(tt ...token.TokenType) (token.Token, error) {
+	for _, t := range tt {
+		if p.check(t) {
+			return p.advance(), nil
+		}
 	}
 	line, pos := p.lexer.Pos()
 	err := fmt.Errorf("Unexpected token at line: %d, pos: %d; got token: %s, expected: %s",
-		line, pos, p.curr.Type, t)
+		line, pos, p.curr.Type, tt)
 	//TODO
 	//p.recover()
 	return token.Token{}, err

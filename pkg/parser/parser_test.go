@@ -178,3 +178,53 @@ func TestParseVariables(t *testing.T) {
 		assert.Equal(t, vars, tt.wantVars)
 	}
 }
+
+func TestParseLabels(t *testing.T) {
+	tests := []struct {
+		input      []token.Token
+		wantLabels []ast.Label
+		wantErr    error
+	}{
+		{
+			input:      []token.Token{},
+			wantLabels: []ast.Label{},
+		},
+		{
+			input: []token.Token{
+				newToken(token.LABEL, "label"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantLabels: []ast.Label{
+				ast.Label{Identifier: "foo"},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.LABEL, "label"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.COMMA, ","),
+				newToken(token.NUMBER, "12345"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "lbl123"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantLabels: []ast.Label{
+				ast.Label{Identifier: "foo"},
+				ast.Label{Identifier: "12345"},
+				ast.Label{Identifier: "lbl123"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		labels, err := p.parseLabels()
+		assert.Equal(t, err, tt.wantErr)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, labels, tt.wantLabels)
+	}
+}
