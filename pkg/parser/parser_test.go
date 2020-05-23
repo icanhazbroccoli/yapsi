@@ -6,42 +6,71 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"yapsi/pkg/ast"
-	"yapsi/pkg/lexer"
 	"yapsi/pkg/token"
 )
 
-type TestLexer struct {
-	tokens []token.Token
-	cur    int
-}
-
-var _ lexer.Interface = (*TestLexer)(nil)
-
-func NewTestLexer(tokens []token.Token) *TestLexer {
-	return &TestLexer{
-		tokens: tokens,
+func TestParseProgramHeader(t *testing.T) {
+	tests := []struct {
+		input          []token.Token
+		wantIdentifier ast.ProgramIdentifier
+		wantParams     []ast.Identifier
+		wantErr        error
+	}{
+		{
+			input: []token.Token{
+				newToken(token.PROGRAM, "program"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantIdentifier: ast.ProgramIdentifier("foo"),
+			wantParams:     []ast.Identifier{},
+		},
+		{
+			input: []token.Token{
+				newToken(token.PROGRAM, "program"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.LPAREN, "("),
+				newToken(token.IDENT, "output"),
+				newToken(token.RPAREN, ")"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantIdentifier: ast.ProgramIdentifier("foo"),
+			wantParams: []ast.Identifier{
+				ast.Identifier("output"),
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.PROGRAM, "program"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.LPAREN, "("),
+				newToken(token.IDENT, "infile1"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "infile2"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "mergedfile"),
+				newToken(token.RPAREN, ")"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantIdentifier: ast.ProgramIdentifier("foo"),
+			wantParams: []ast.Identifier{
+				ast.Identifier("infile1"),
+				ast.Identifier("infile2"),
+				ast.Identifier("mergedfile"),
+			},
+		},
 	}
-}
 
-func (l *TestLexer) NextToken() token.Token {
-	if l.cur >= len(l.tokens) {
-		return token.Token{
-			Type: token.EOF,
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		identifier, params, err := p.parseProgramHeader()
+		assert.Equal(t, err, tt.wantErr)
+		if err != nil {
+			continue
 		}
-	}
-	peek := l.tokens[l.cur]
-	l.cur++
-	return peek
-}
-
-func (l *TestLexer) Pos() (int, int) {
-	return 0, l.cur
-}
-
-func newToken(t token.TokenType, l string) token.Token {
-	return token.Token{
-		Type:    t,
-		Literal: l,
+		assert.Equal(t, tt.wantIdentifier, identifier)
+		assert.Equal(t, tt.wantParams, params)
 	}
 }
 

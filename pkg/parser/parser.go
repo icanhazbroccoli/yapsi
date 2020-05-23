@@ -36,25 +36,51 @@ func New(lexer lexer.Interface) *Parser {
 
 func (p *Parser) ParseProgram() (*ast.Program, error) {
 	program := &ast.Program{}
-	if _, err := p.consume(token.PROGRAM); err != nil {
-		return nil, err
-	}
-	identifier, err := p.consume(token.IDENT)
+	identifier, params, err := p.parseProgramHeader()
 	if err != nil {
 		return nil, err
 	}
-	if _, err := p.consume(token.SEMICOLON); err != nil {
-		return nil, err
-	}
+
 	block, err := p.parseBlock()
 	if err != nil {
 		return nil, err
 	}
 
-	program.Identifier = ast.ProgramIdentifier(identifier.Literal)
+	program.Identifier = identifier
+	program.Params = params
 	program.Block = *block
 
 	return program, nil
+}
+
+func (p *Parser) parseProgramHeader() (ast.ProgramIdentifier, []ast.Identifier, error) {
+	if _, err := p.consume(token.PROGRAM); err != nil {
+		return "", nil, err
+	}
+	identifier, err := p.consume(token.IDENT)
+	if err != nil {
+		return "", nil, err
+	}
+	params := []ast.Identifier{}
+	if p.match(token.LPAREN) {
+		for p.check(token.IDENT) {
+			param, err := p.consume(token.IDENT)
+			if err != nil {
+				return "", nil, err
+			}
+			params = append(params, ast.Identifier(param.Literal))
+			if !p.match(token.COMMA) {
+				break
+			}
+		}
+		if _, err := p.consume(token.RPAREN); err != nil {
+			return "", nil, err
+		}
+	}
+	if _, err := p.consume(token.SEMICOLON); err != nil {
+		return "", nil, err
+	}
+	return ast.ProgramIdentifier(identifier.Literal), params, nil
 }
 
 func (p *Parser) parseBlock() (*ast.Block, error) {

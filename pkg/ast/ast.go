@@ -4,12 +4,13 @@ type Callable interface{}
 
 type TypeDefinition interface{}
 
-type VarIdentifier string
-type TypeIdentifier string
-type LabelIdentifier string
-type ConstIdentifier string
-type ProgramIdentifier string
-type CallableIdentifier string
+type Identifier string
+type VarIdentifier Identifier
+type TypeIdentifier Identifier
+type LabelIdentifier Identifier
+type ConstIdentifier Identifier
+type ProgramIdentifier Identifier
+type CallableIdentifier Identifier
 
 type Label struct {
 	Identifier LabelIdentifier
@@ -35,6 +36,7 @@ type Variable struct {
 
 type Program struct {
 	Identifier ProgramIdentifier
+	Params     []Identifier
 	Block
 }
 
