@@ -228,3 +228,495 @@ func TestParseLabels(t *testing.T) {
 		assert.Equal(t, labels, tt.wantLabels)
 	}
 }
+
+/*
+func TestParseConstants(t *testing.T) {
+	tests := []struct {
+		input         []token.Token
+		wantConstants []ast.Constant
+		wantErr       error
+	}{
+		{
+			input:         []token.Token{},
+			wantConstants: []ast.Constant{},
+		},
+		{
+			input: []token.Token{
+				newToken(token.CONST, "const"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.EQUAL, "="),
+				newToken(token.NUMBER, "12345"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantConstants: []ast.Constant{
+				ast.Constant{
+					Identifier: ast.ConstIdentifier("foo"),
+					Raw:        newToken(token.NUMBER, "12345"),
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.CONST, "const"),
+				newToken(token.IDENT, "const_number"),
+				newToken(token.EQUAL, "="),
+				newToken(token.NUMBER, "123.45"),
+				newToken(token.SEMICOLON, ";"),
+				newToken(token.IDENT, "const_set"),
+				newToken(token.EQUAL, "="),
+				newToken(token.NIL, "nil"),
+				newToken(token.SEMICOLON, ";"),
+				newToken(token.IDENT, "const_char"),
+				newToken(toke.EQUAL, "="),
+				newToken(token.CHAR, "'a'"),
+				newToken(token.SEMICOLON, ";"),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		constants, err := p.parseConstants()
+		assert.Equal(t, err, tt.wantErr)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, constants, tt.wantConstants)
+	}
+}
+*/
+
+func TestParseFactor(t *testing.T) {
+	tests := []struct {
+		input    []token.Token
+		wantExpr ast.Expression
+		wantErr  error
+	}{
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "12345"),
+			},
+			wantExpr: &ast.NumericLiteral{
+				Token: newToken(token.NUMBER, "12345"),
+				Value: ast.RawNumber("12345"),
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.STRING, "Hello World!"),
+			},
+			wantExpr: &ast.StringLiteral{
+				Token: newToken(token.STRING, "Hello World!"),
+				Value: "Hello World!",
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.CHAR, "я"),
+			},
+			wantExpr: &ast.CharLiteral{
+				Token: newToken(token.CHAR, "я"),
+				Value: 'я',
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.TRUE, "true"),
+			},
+			wantExpr: &ast.BoolLiteral{
+				Token: newToken(token.TRUE, "true"),
+				Value: true,
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.NOT, "not"),
+				newToken(token.FALSE, "false"),
+			},
+			wantExpr: &ast.UnaryExpr{
+				Operator: newToken(token.NOT, "not"),
+				Expr: &ast.BoolLiteral{
+					Token: newToken(token.FALSE, "false"),
+					Value: false,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		expr, err := p.parseFactor()
+		assert.Equal(t, err, tt.wantErr)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, expr, tt.wantExpr)
+	}
+}
+
+func TestParseTermExpr(t *testing.T) {
+	tests := []struct {
+		input    []token.Token
+		wantExpr ast.Expression
+		wantErr  error
+	}{
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "1"),
+			},
+			wantExpr: &ast.NumericLiteral{
+				Token: newToken(token.NUMBER, "1"),
+				Value: ast.RawNumber("1"),
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "1"),
+				newToken(token.ASTERISK, "*"),
+				newToken(token.NUMBER, "2"),
+			},
+			wantExpr: &ast.BinaryExpr{
+				Left: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "1"),
+					Value: ast.RawNumber("1"),
+				},
+				Operator: newToken(token.ASTERISK, "*"),
+				Right: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "2"),
+					Value: ast.RawNumber("2"),
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "2"),
+				newToken(token.DIV, "div"),
+				newToken(token.NUMBER, "3"),
+			},
+			wantExpr: &ast.BinaryExpr{
+				Left: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "2"),
+					Value: ast.RawNumber("2"),
+				},
+				Operator: newToken(token.DIV, "div"),
+				Right: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "3"),
+					Value: ast.RawNumber("3"),
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "2"),
+				newToken(token.MOD, "mod"),
+				newToken(token.NUMBER, "3"),
+			},
+			wantExpr: &ast.BinaryExpr{
+				Left: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "2"),
+					Value: ast.RawNumber("2"),
+				},
+				Operator: newToken(token.MOD, "mod"),
+				Right: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "3"),
+					Value: ast.RawNumber("3"),
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "1"),
+				newToken(token.ASTERISK, "*"),
+				newToken(token.NUMBER, "2"),
+				newToken(token.SLASH, "/"),
+				newToken(token.NUMBER, "3"),
+			},
+			wantExpr: &ast.BinaryExpr{
+				Left: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "1"),
+					Value: ast.RawNumber("1"),
+				},
+				Operator: newToken(token.ASTERISK, "*"),
+				Right: &ast.BinaryExpr{
+					Left: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "2"),
+						Value: ast.RawNumber("2"),
+					},
+					Operator: newToken(token.SLASH, "/"),
+					Right: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "3"),
+						Value: ast.RawNumber("3"),
+					},
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.TRUE, "true"),
+				newToken(token.AND, "and"),
+				newToken(token.FALSE, "false"),
+				newToken(token.AND, "and"),
+				newToken(token.TRUE, "true"),
+			},
+			wantExpr: &ast.BinaryExpr{
+				Left: &ast.BoolLiteral{
+					Token: newToken(token.TRUE, "true"),
+					Value: true,
+				},
+				Operator: newToken(token.AND, "and"),
+				Right: &ast.BinaryExpr{
+					Left: &ast.BoolLiteral{
+						Token: newToken(token.FALSE, "false"),
+						Value: false,
+					},
+					Operator: newToken(token.AND, "and"),
+					Right: &ast.BoolLiteral{
+						Token: newToken(token.TRUE, "true"),
+						Value: true,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		expr, err := p.parseTerm()
+		assert.Equal(t, err, tt.wantErr)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, expr, tt.wantExpr)
+	}
+}
+
+func TestParseSimpleExpression(t *testing.T) {
+	tests := []struct {
+		input    []token.Token
+		wantExpr ast.Expression
+		wantErr  error
+	}{
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "1"),
+			},
+			wantExpr: &ast.NumericLiteral{
+				Token: newToken(token.NUMBER, "1"),
+				Value: ast.RawNumber("1"),
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.MINUS, "-"),
+				newToken(token.NUMBER, "42"),
+			},
+			wantExpr: &ast.UnaryExpr{
+				Operator: newToken(token.MINUS, "-"),
+				Expr: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "42"),
+					Value: ast.RawNumber("42"),
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.PLUS, "+"),
+				newToken(token.NUMBER, "42"),
+			},
+			wantExpr: &ast.UnaryExpr{
+				Operator: newToken(token.PLUS, "+"),
+				Expr: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "42"),
+					Value: ast.RawNumber("42"),
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "1"),
+				newToken(token.PLUS, "+"),
+				newToken(token.NUMBER, "2"),
+			},
+			wantExpr: &ast.BinaryExpr{
+				Left: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "1"),
+					Value: ast.RawNumber("1"),
+				},
+				Operator: newToken(token.PLUS, "+"),
+				Right: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "2"),
+					Value: ast.RawNumber("2"),
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "1"),
+				newToken(token.MINUS, "-"),
+				newToken(token.NUMBER, "2"),
+			},
+			wantExpr: &ast.BinaryExpr{
+				Left: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "1"),
+					Value: ast.RawNumber("1"),
+				},
+				Operator: newToken(token.MINUS, "-"),
+				Right: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "2"),
+					Value: ast.RawNumber("2"),
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.TRUE, "true"),
+				newToken(token.OR, "or"),
+				newToken(token.FALSE, "false"),
+			},
+			wantExpr: &ast.BinaryExpr{
+				Left: &ast.BoolLiteral{
+					Token: newToken(token.TRUE, "true"),
+					Value: true,
+				},
+				Operator: newToken(token.OR, "or"),
+				Right: &ast.BoolLiteral{
+					Token: newToken(token.FALSE, "false"),
+					Value: false,
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "1"),
+				newToken(token.PLUS, "+"),
+				newToken(token.NUMBER, "2"),
+				newToken(token.ASTERISK, "*"),
+				newToken(token.NUMBER, "3"),
+			},
+			wantExpr: &ast.BinaryExpr{
+				Left: &ast.NumericLiteral{
+					Token: newToken(token.NUMBER, "1"),
+					Value: ast.RawNumber("1"),
+				},
+				Operator: newToken(token.PLUS, "+"),
+				Right: &ast.BinaryExpr{
+					Left: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "2"),
+						Value: ast.RawNumber("2"),
+					},
+					Operator: newToken(token.ASTERISK, "*"),
+					Right: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "3"),
+						Value: ast.RawNumber("3"),
+					},
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "1"),
+				newToken(token.SLASH, "/"),
+				newToken(token.NUMBER, "4"),
+				newToken(token.PLUS, "+"),
+				newToken(token.NUMBER, "2"),
+				newToken(token.ASTERISK, "*"),
+				newToken(token.NUMBER, "3"),
+			},
+			wantExpr: &ast.BinaryExpr{
+				Left: &ast.BinaryExpr{
+					Left: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "1"),
+						Value: ast.RawNumber("1"),
+					},
+					Operator: newToken(token.SLASH, "/"),
+					Right: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "4"),
+						Value: ast.RawNumber("4"),
+					},
+				},
+				Operator: newToken(token.PLUS, "+"),
+				Right: &ast.BinaryExpr{
+					Left: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "2"),
+						Value: ast.RawNumber("2"),
+					},
+					Operator: newToken(token.ASTERISK, "*"),
+					Right: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "3"),
+						Value: ast.RawNumber("3"),
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		expr, err := p.parseSimpleExpression()
+		assert.Equal(t, err, tt.wantErr)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, expr, tt.wantExpr)
+	}
+}
+
+func TestParseExpression(t *testing.T) {
+	tests := []struct {
+		input    []token.Token
+		wantExpr ast.Expression
+		wantErr  error
+	}{
+		{
+			input: []token.Token{
+				newToken(token.NUMBER, "2"),
+				newToken(token.ASTERISK, "*"),
+				newToken(token.NUMBER, "2"),
+				newToken(token.GTEQL, ">="),
+				newToken(token.NUMBER, "1"),
+				newToken(token.PLUS, "+"),
+				newToken(token.NUMBER, "3"),
+			},
+			wantExpr: &ast.BinaryExpr{
+				Left: &ast.BinaryExpr{
+					Left: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "2"),
+						Value: ast.RawNumber("2"),
+					},
+					Operator: newToken(token.ASTERISK, "*"),
+					Right: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "2"),
+						Value: ast.RawNumber("2"),
+					},
+				},
+				Operator: newToken(token.GTEQL, ">="),
+				Right: &ast.BinaryExpr{
+					Left: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "1"),
+						Value: ast.RawNumber("1"),
+					},
+					Operator: newToken(token.PLUS, "+"),
+					Right: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "3"),
+						Value: ast.RawNumber("3"),
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		expr, err := p.parseExpression()
+		assert.Equal(t, err, tt.wantErr)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, expr, tt.wantExpr)
+	}
+}

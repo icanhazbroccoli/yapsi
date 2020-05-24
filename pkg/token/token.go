@@ -8,6 +8,9 @@ const (
 	IDENT     TokenType = "IDENT"
 	NUMBER              = "NUMBER"
 	STRING              = "STRING"
+	POINTER             = "POINTER"
+	CHAR                = "CHAR"
+	BOOL                = "BOOL"
 	EOF                 = "EOF"
 	ILLEGAL             = "ILLEGAL"
 	PLUS                = "+"
@@ -41,6 +44,7 @@ const (
 	DOWNTO              = "DOWNTO"
 	ELSE                = "ELSE"
 	END                 = "END"
+	FALSE               = "FALSE"
 	FILE                = "FILE"
 	FOR                 = "FOR"
 	FUNCTION            = "FUNCTION"
@@ -61,6 +65,7 @@ const (
 	SET                 = "SET"
 	THEN                = "THEN"
 	TO                  = "TO"
+	TRUE                = "TRUE"
 	TYPE                = "TYPE"
 	UNTIL               = "UNTIL"
 	VAR                 = "VAR"
@@ -83,6 +88,7 @@ var keywords = map[string]TokenType{
 	"downto":    DOWNTO,
 	"else":      ELSE,
 	"end":       END,
+	"false":     FALSE,
 	"file":      FILE,
 	"for":       FOR,
 	"function":  FUNCTION,
@@ -100,6 +106,7 @@ var keywords = map[string]TokenType{
 	"repeat":    REPEAT,
 	"then":      THEN,
 	"to":        TO,
+	"true":      TRUE,
 	"type":      TYPE,
 	"until":     UNTIL,
 	"var":       VAR,

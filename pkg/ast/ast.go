@@ -1,5 +1,26 @@
 package ast
 
+type Node interface {
+	Visit(NodeVisitor) VisitorResult
+}
+
+type Literal interface {
+	Node
+	TokenLiteral() string
+}
+
+type Statement interface {
+	Node
+	statementNode()
+}
+
+type Expression interface {
+	Node
+	expressionNode()
+}
+
+type RawNumber string
+
 type Callable interface{}
 
 type TypeDefinition interface{}
@@ -20,6 +41,7 @@ type Value interface{}
 
 type Constant struct {
 	Identifier ConstIdentifier
+	Raw        Expression
 	Type       TypeIdentifier
 	Value      Value
 }
@@ -62,21 +84,4 @@ type Function struct {
 	Arguments  []Variable
 	ReturnType TypeIdentifier
 	Body       []Statement
-}
-
-//======
-
-type Node interface {
-	TokenLiteral() string
-	String() string
-}
-
-type Statement interface {
-	Node
-	statementNode()
-}
-
-type Expression interface {
-	Node
-	expressionNode()
 }

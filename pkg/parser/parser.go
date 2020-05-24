@@ -2,30 +2,23 @@ package parser
 
 import (
 	"fmt"
+	"unicode/utf8"
 	"yapsi/pkg/ast"
 	"yapsi/pkg/lexer"
 	"yapsi/pkg/token"
 )
 
-type (
-	prefixParseFn func() ast.Expression
-	infixParseFn  func(ast.Expression) ast.Expression
-)
+// grammar rules are taken from:
+// https://condor.depaul.edu/ichu/csc447/notes/wk2/pascal.html
 
 type Parser struct {
-	lexer lexer.Interface
-
+	lexer            lexer.Interface
 	prev, curr, next token.Token
-
-	prefixParseFns map[token.TokenType]prefixParseFn
-	infixParseFns  map[token.TokenType]infixParseFn
 }
 
 func New(lexer lexer.Interface) *Parser {
 	p := &Parser{
-		lexer:          lexer,
-		prefixParseFns: make(map[token.TokenType]prefixParseFn),
-		infixParseFns:  make(map[token.TokenType]infixParseFn),
+		lexer: lexer,
 	}
 
 	p.advance()
@@ -51,6 +44,136 @@ func (p *Parser) ParseProgram() (*ast.Program, error) {
 	program.Block = *block
 
 	return program, nil
+}
+
+// <factor> ::= <variable> | <unsigned constant> | ( <expression> ) |
+//				<function designator> | <set> | not <factor>
+func (p *Parser) parseFactor() (ast.Expression, error) {
+	if p.match(token.IDENT) {
+		return &ast.IdentifierExpr{
+			Token: p.previous(),
+			Value: p.previous().Literal,
+		}, nil
+	}
+	if p.match(token.NUMBER) {
+		return &ast.NumericLiteral{
+			Token: p.previous(),
+			Value: ast.RawNumber(p.previous().Literal),
+		}, nil
+	}
+	if p.match(token.STRING) {
+		return &ast.StringLiteral{
+			Token: p.previous(),
+			Value: p.previous().Literal,
+		}, nil
+	}
+	if p.match(token.CHAR) {
+		r, _ := utf8.DecodeRune([]byte(p.previous().Literal))
+		return &ast.CharLiteral{
+			Token: p.previous(),
+			Value: r,
+		}, nil
+	}
+	if p.match(token.TRUE, token.FALSE) {
+		var v bool
+		switch p.previous().Literal {
+		case "true", "TRUE", "True":
+			v = true
+		}
+		return &ast.BoolLiteral{
+			Token: p.previous(),
+			Value: v,
+		}, nil
+	}
+	if p.match(token.NOT) {
+		op := p.previous()
+		expr, err := p.parseFactor()
+		if err != nil {
+			return nil, err
+		}
+		return &ast.UnaryExpr{
+			Operator: op,
+			Expr:     expr,
+		}, nil
+	}
+	if p.match(token.LPAREN) {
+		expr, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := p.consume(token.RPAREN); err != nil {
+			return nil, err
+		}
+		return expr, nil
+	}
+	return nil, fmt.Errorf("Unknown literal token: %s (%s)",
+		p.peek().Literal, p.peek().Type)
+}
+
+// <term> ::= <factor> | <term> <multiplying operator> <factor>
+func (p *Parser) parseTerm() (ast.Expression, error) {
+	expr, err := p.parseFactor()
+	if err != nil {
+		return nil, err
+	}
+	for p.match(
+		token.ASTERISK,
+		token.SLASH,
+		token.DIV,
+		token.MOD,
+		token.AND,
+	) {
+		op := p.previous()
+		right, err := p.parseTerm()
+		if err != nil {
+			return nil, err
+		}
+		expr = &ast.BinaryExpr{
+			Left:     expr,
+			Operator: op,
+			Right:    right,
+		}
+	}
+	return expr, nil
+}
+
+// <simple expression> ::= <term> | <sign> <term>| <simple expression> <adding operator> <term>
+func (p *Parser) parseSimpleExpression() (ast.Expression, error) {
+	if p.match(
+		token.PLUS,
+		token.MINUS,
+	) {
+		op := p.previous()
+		expr, err := p.parseTerm()
+		if err != nil {
+			return nil, err
+		}
+		return &ast.UnaryExpr{
+			Operator: op,
+			Expr:     expr,
+		}, nil
+	}
+	expr, err := p.parseTerm()
+	if err != nil {
+		return nil, err
+	}
+	for p.match(
+		token.PLUS,
+		token.MINUS,
+		token.OR,
+	) {
+		op := p.previous()
+		right, err := p.parseSimpleExpression()
+		if err != nil {
+			return nil, err
+		}
+		expr = &ast.BinaryExpr{
+			Left:     expr,
+			Operator: op,
+			Right:    right,
+		}
+	}
+	return expr, nil
 }
 
 func (p *Parser) parseProgramHeader() (ast.ProgramIdentifier, []ast.Identifier, error) {
@@ -128,7 +251,7 @@ func (p *Parser) parseVariables() ([]ast.Variable, error) {
 
 	for {
 		identifiers := []ast.VarIdentifier{}
-		for {
+		for p.hasNext() {
 			identifier, err := p.consume(token.IDENT)
 			if err != nil {
 				return nil, err
@@ -170,7 +293,7 @@ func (p *Parser) parseLabels() ([]ast.Label, error) {
 	if !p.match(token.LABEL) {
 		return labels, nil
 	}
-	for {
+	for p.hasNext() {
 		ident, err := p.consume(token.IDENT, token.NUMBER)
 		if err != nil {
 			return nil, err
@@ -189,8 +312,65 @@ func (p *Parser) parseLabels() ([]ast.Label, error) {
 }
 
 func (p *Parser) parseConstants() ([]ast.Constant, error) {
-	//TODO
-	panic("not implemented")
+	constants := []ast.Constant{}
+	if !p.match(token.CONST) {
+		return constants, nil
+	}
+	for p.hasNext() {
+		ident, err := p.consume(token.IDENT)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := p.consume(token.EQUAL); err != nil {
+			return nil, err
+		}
+		value, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		constants = append(constants, ast.Constant{
+			Identifier: ast.ConstIdentifier(ident.Literal),
+			Raw:        value,
+		})
+		if _, err := p.consume(token.SEMICOLON); err != nil {
+			return nil, err
+		}
+		if !p.match(token.IDENT) {
+			break
+		}
+	}
+
+	return constants, nil
+}
+
+// <expression> ::= <simple expression> |
+//					<simple expression> <relational operator> <simple expression>
+func (p *Parser) parseExpression() (ast.Expression, error) {
+	expr, err := p.parseSimpleExpression()
+	if err != nil {
+		return nil, err
+	}
+	if p.match(
+		token.EQUAL,
+		token.NOTEQUAL,
+		token.LESS,
+		token.LTEQL,
+		token.GTEQL,
+		token.GREATER,
+		token.IN,
+	) {
+		op := p.previous()
+		right, err := p.parseSimpleExpression()
+		if err != nil {
+			return nil, err
+		}
+		expr = &ast.BinaryExpr{
+			Left:     expr,
+			Operator: op,
+			Right:    right,
+		}
+	}
+	return expr, nil
 }
 
 func (p *Parser) parseTypes() ([]ast.Type, error) {
@@ -222,12 +402,12 @@ func (p *Parser) peek() token.Token {
 	return p.curr
 }
 
-func (p *Parser) hasNext() bool {
-	return p.peek().Type != token.EOF
-}
-
 func (p *Parser) previous() token.Token {
 	return p.prev
+}
+
+func (p *Parser) hasNext() bool {
+	return p.peek().Type != token.EOF
 }
 
 func (p *Parser) consume(tt ...token.TokenType) (token.Token, error) {
