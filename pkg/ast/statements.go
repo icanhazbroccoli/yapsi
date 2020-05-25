@@ -1,5 +1,45 @@
 package ast
 
+// <assignment statement> ::= <variable> := <expression> | <function identifier> := <expression>
+type AssignmentStmt struct {
+	Identifier *IdentifierExpr
+	Expr       Expression
+}
+
+var _ (Statement) = (*AssignmentStmt)(nil)
+
+func (s *AssignmentStmt) statementNode()                    {}
+func (s *AssignmentStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitAssignmentStmt(s) }
+
+type GotoStmt struct {
+	Label IdentifierExpr
+}
+
+var _ (Statement) = (*GotoStmt)(nil)
+
+func (s *GotoStmt) statementNode()                    {}
+func (s *GotoStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitGotoStmt(s) }
+
+type LabeledStmt struct {
+	Label *IdentifierExpr
+	Stmt  Statement
+}
+
+var _ (Statement) = (*LabeledStmt)(nil)
+
+func (s *LabeledStmt) statementNode()                    {}
+func (s *LabeledStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitLabeledStmt(s) }
+
+type CallStmt struct {
+	Identifier *IdentifierExpr
+	Args       []Expression
+}
+
+var _ (Statement) = (*CallStmt)(nil)
+
+func (s *CallStmt) statementNode()                    {}
+func (s *CallStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitCallStmt(s) }
+
 /*
 type ProgramStmt struct {
 	Header *ProgramHeaderStmt

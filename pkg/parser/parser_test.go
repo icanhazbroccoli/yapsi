@@ -9,283 +9,281 @@ import (
 	"yapsi/pkg/token"
 )
 
-func TestParseProgramHeader(t *testing.T) {
-	tests := []struct {
-		input          []token.Token
-		wantIdentifier ast.ProgramIdentifier
-		wantParams     []ast.Identifier
-		wantErr        error
-	}{
-		{
-			input: []token.Token{
-				newToken(token.PROGRAM, "program"),
-				newToken(token.IDENT, "foo"),
-				newToken(token.SEMICOLON, ";"),
-			},
-			wantIdentifier: ast.ProgramIdentifier("foo"),
-			wantParams:     []ast.Identifier{},
-		},
-		{
-			input: []token.Token{
-				newToken(token.PROGRAM, "program"),
-				newToken(token.IDENT, "foo"),
-				newToken(token.LPAREN, "("),
-				newToken(token.IDENT, "output"),
-				newToken(token.RPAREN, ")"),
-				newToken(token.SEMICOLON, ";"),
-			},
-			wantIdentifier: ast.ProgramIdentifier("foo"),
-			wantParams: []ast.Identifier{
-				ast.Identifier("output"),
-			},
-		},
-		{
-			input: []token.Token{
-				newToken(token.PROGRAM, "program"),
-				newToken(token.IDENT, "foo"),
-				newToken(token.LPAREN, "("),
-				newToken(token.IDENT, "infile1"),
-				newToken(token.COMMA, ","),
-				newToken(token.IDENT, "infile2"),
-				newToken(token.COMMA, ","),
-				newToken(token.IDENT, "mergedfile"),
-				newToken(token.RPAREN, ")"),
-				newToken(token.SEMICOLON, ";"),
-			},
-			wantIdentifier: ast.ProgramIdentifier("foo"),
-			wantParams: []ast.Identifier{
-				ast.Identifier("infile1"),
-				ast.Identifier("infile2"),
-				ast.Identifier("mergedfile"),
-			},
-		},
-	}
+//func TestParseProgramHeader(t *testing.T) {
+//	tests := []struct {
+//		input          []token.Token
+//		wantIdentifier ast.ProgramIdentifier
+//		wantParams     []ast.Identifier
+//		wantErr        error
+//	}{
+//		{
+//			input: []token.Token{
+//				newToken(token.PROGRAM, "program"),
+//				newToken(token.IDENT, "foo"),
+//				newToken(token.SEMICOLON, ";"),
+//			},
+//			wantIdentifier: ast.ProgramIdentifier("foo"),
+//			wantParams:     []ast.Identifier{},
+//		},
+//		{
+//			input: []token.Token{
+//				newToken(token.PROGRAM, "program"),
+//				newToken(token.IDENT, "foo"),
+//				newToken(token.LPAREN, "("),
+//				newToken(token.IDENT, "output"),
+//				newToken(token.RPAREN, ")"),
+//				newToken(token.SEMICOLON, ";"),
+//			},
+//			wantIdentifier: ast.ProgramIdentifier("foo"),
+//			wantParams: []ast.Identifier{
+//				ast.Identifier("output"),
+//			},
+//		},
+//		{
+//			input: []token.Token{
+//				newToken(token.PROGRAM, "program"),
+//				newToken(token.IDENT, "foo"),
+//				newToken(token.LPAREN, "("),
+//				newToken(token.IDENT, "infile1"),
+//				newToken(token.COMMA, ","),
+//				newToken(token.IDENT, "infile2"),
+//				newToken(token.COMMA, ","),
+//				newToken(token.IDENT, "mergedfile"),
+//				newToken(token.RPAREN, ")"),
+//				newToken(token.SEMICOLON, ";"),
+//			},
+//			wantIdentifier: ast.ProgramIdentifier("foo"),
+//			wantParams: []ast.Identifier{
+//				ast.Identifier("infile1"),
+//				ast.Identifier("infile2"),
+//				ast.Identifier("mergedfile"),
+//			},
+//		},
+//	}
+//
+//	for _, tt := range tests {
+//		l := NewTestLexer(tt.input)
+//		p := New(l)
+//		identifier, params, err := p.parseProgramHeader()
+//		assert.Equal(t, err, tt.wantErr)
+//		if err != nil {
+//			continue
+//		}
+//		assert.Equal(t, tt.wantIdentifier, identifier)
+//		assert.Equal(t, tt.wantParams, params)
+//	}
+//}
+//
+//func TestParseVariables(t *testing.T) {
+//	tests := []struct {
+//		input    []token.Token
+//		wantVars []ast.Variable
+//		wantErr  error
+//	}{
+//		{
+//			input:    []token.Token{},
+//			wantVars: []ast.Variable{},
+//			wantErr:  nil,
+//		},
+//		{
+//			input: []token.Token{
+//				newToken(token.VAR, "var"),
+//				newToken(token.IDENT, "foo"),
+//				newToken(token.COLON, ":"),
+//				newToken(token.IDENT, "bar"),
+//				newToken(token.SEMICOLON, ";"),
+//			},
+//			wantVars: []ast.Variable{
+//				ast.Variable{
+//					Identifier: ast.VarIdentifier("foo"),
+//					Type:       ast.TypeIdentifier("bar"),
+//				},
+//			},
+//			wantErr: nil,
+//		},
+//		{
+//			input: []token.Token{
+//				newToken(token.VAR, "var"),
+//				newToken(token.IDENT, "foo"),
+//				newToken(token.COMMA, ","),
+//				newToken(token.IDENT, "bar"),
+//				newToken(token.COMMA, ","),
+//				newToken(token.IDENT, "baz"),
+//				newToken(token.COLON, ":"),
+//				newToken(token.IDENT, "boo"),
+//				newToken(token.SEMICOLON, ";"),
+//			},
+//			wantVars: []ast.Variable{
+//				ast.Variable{
+//					Identifier: ast.VarIdentifier("foo"),
+//					Type:       ast.TypeIdentifier("boo"),
+//				},
+//				ast.Variable{
+//					Identifier: ast.VarIdentifier("bar"),
+//					Type:       ast.TypeIdentifier("boo"),
+//				},
+//				ast.Variable{
+//					Identifier: ast.VarIdentifier("baz"),
+//					Type:       ast.TypeIdentifier("boo"),
+//				},
+//			},
+//			wantErr: nil,
+//		},
+//		{
+//			input: []token.Token{
+//				newToken(token.VAR, "var"),
+//				newToken(token.IDENT, "foo"),
+//				newToken(token.COMMA, ","),
+//				newToken(token.IDENT, "bar"),
+//				newToken(token.COLON, ":"),
+//				newToken(token.IDENT, "Integer"),
+//				newToken(token.SEMICOLON, ";"),
+//				newToken(token.IDENT, "baz"),
+//				newToken(token.COMMA, ","),
+//				newToken(token.IDENT, "boo"),
+//				newToken(token.COLON, ":"),
+//				newToken(token.IDENT, "Real"),
+//				newToken(token.SEMICOLON, ";"),
+//			},
+//			wantVars: []ast.Variable{
+//				ast.Variable{
+//					Identifier: ast.VarIdentifier("foo"),
+//					Type:       ast.TypeIdentifier("Integer"),
+//				},
+//				ast.Variable{
+//					Identifier: ast.VarIdentifier("bar"),
+//					Type:       ast.TypeIdentifier("Integer"),
+//				},
+//				ast.Variable{
+//					Identifier: ast.VarIdentifier("baz"),
+//					Type:       ast.TypeIdentifier("Real"),
+//				},
+//				ast.Variable{
+//					Identifier: ast.VarIdentifier("boo"),
+//					Type:       ast.TypeIdentifier("Real"),
+//				},
+//			},
+//			wantErr: nil,
+//		},
+//	}
+//
+//	for _, tt := range tests {
+//		l := NewTestLexer(tt.input)
+//		p := New(l)
+//		vars, err := p.parseVariables()
+//		assert.Equal(t, err, tt.wantErr)
+//		if err != nil {
+//			continue
+//		}
+//		assert.Equal(t, vars, tt.wantVars)
+//	}
+//}
+//
+//func TestParseLabels(t *testing.T) {
+//	tests := []struct {
+//		input      []token.Token
+//		wantLabels []ast.Label
+//		wantErr    error
+//	}{
+//		{
+//			input:      []token.Token{},
+//			wantLabels: []ast.Label{},
+//		},
+//		{
+//			input: []token.Token{
+//				newToken(token.LABEL, "label"),
+//				newToken(token.IDENT, "foo"),
+//				newToken(token.SEMICOLON, ";"),
+//			},
+//			wantLabels: []ast.Label{
+//				ast.Label{Identifier: "foo"},
+//			},
+//		},
+//		{
+//			input: []token.Token{
+//				newToken(token.LABEL, "label"),
+//				newToken(token.IDENT, "foo"),
+//				newToken(token.COMMA, ","),
+//				newToken(token.NUMBER, "12345"),
+//				newToken(token.COMMA, ","),
+//				newToken(token.IDENT, "lbl123"),
+//				newToken(token.SEMICOLON, ";"),
+//			},
+//			wantLabels: []ast.Label{
+//				ast.Label{Identifier: "foo"},
+//				ast.Label{Identifier: "12345"},
+//				ast.Label{Identifier: "lbl123"},
+//			},
+//		},
+//	}
+//
+//	for _, tt := range tests {
+//		l := NewTestLexer(tt.input)
+//		p := New(l)
+//		labels, err := p.parseLabels()
+//		assert.Equal(t, err, tt.wantErr)
+//		if err != nil {
+//			continue
+//		}
+//		assert.Equal(t, labels, tt.wantLabels)
+//	}
+//}
 
-	for _, tt := range tests {
-		l := NewTestLexer(tt.input)
-		p := New(l)
-		identifier, params, err := p.parseProgramHeader()
-		assert.Equal(t, err, tt.wantErr)
-		if err != nil {
-			continue
-		}
-		assert.Equal(t, tt.wantIdentifier, identifier)
-		assert.Equal(t, tt.wantParams, params)
-	}
-}
-
-func TestParseVariables(t *testing.T) {
-	tests := []struct {
-		input    []token.Token
-		wantVars []ast.Variable
-		wantErr  error
-	}{
-		{
-			input:    []token.Token{},
-			wantVars: []ast.Variable{},
-			wantErr:  nil,
-		},
-		{
-			input: []token.Token{
-				newToken(token.VAR, "var"),
-				newToken(token.IDENT, "foo"),
-				newToken(token.COLON, ":"),
-				newToken(token.IDENT, "bar"),
-				newToken(token.SEMICOLON, ";"),
-			},
-			wantVars: []ast.Variable{
-				ast.Variable{
-					Identifier: ast.VarIdentifier("foo"),
-					Type:       ast.TypeIdentifier("bar"),
-				},
-			},
-			wantErr: nil,
-		},
-		{
-			input: []token.Token{
-				newToken(token.VAR, "var"),
-				newToken(token.IDENT, "foo"),
-				newToken(token.COMMA, ","),
-				newToken(token.IDENT, "bar"),
-				newToken(token.COMMA, ","),
-				newToken(token.IDENT, "baz"),
-				newToken(token.COLON, ":"),
-				newToken(token.IDENT, "boo"),
-				newToken(token.SEMICOLON, ";"),
-			},
-			wantVars: []ast.Variable{
-				ast.Variable{
-					Identifier: ast.VarIdentifier("foo"),
-					Type:       ast.TypeIdentifier("boo"),
-				},
-				ast.Variable{
-					Identifier: ast.VarIdentifier("bar"),
-					Type:       ast.TypeIdentifier("boo"),
-				},
-				ast.Variable{
-					Identifier: ast.VarIdentifier("baz"),
-					Type:       ast.TypeIdentifier("boo"),
-				},
-			},
-			wantErr: nil,
-		},
-		{
-			input: []token.Token{
-				newToken(token.VAR, "var"),
-				newToken(token.IDENT, "foo"),
-				newToken(token.COMMA, ","),
-				newToken(token.IDENT, "bar"),
-				newToken(token.COLON, ":"),
-				newToken(token.IDENT, "Integer"),
-				newToken(token.SEMICOLON, ";"),
-				newToken(token.IDENT, "baz"),
-				newToken(token.COMMA, ","),
-				newToken(token.IDENT, "boo"),
-				newToken(token.COLON, ":"),
-				newToken(token.IDENT, "Real"),
-				newToken(token.SEMICOLON, ";"),
-			},
-			wantVars: []ast.Variable{
-				ast.Variable{
-					Identifier: ast.VarIdentifier("foo"),
-					Type:       ast.TypeIdentifier("Integer"),
-				},
-				ast.Variable{
-					Identifier: ast.VarIdentifier("bar"),
-					Type:       ast.TypeIdentifier("Integer"),
-				},
-				ast.Variable{
-					Identifier: ast.VarIdentifier("baz"),
-					Type:       ast.TypeIdentifier("Real"),
-				},
-				ast.Variable{
-					Identifier: ast.VarIdentifier("boo"),
-					Type:       ast.TypeIdentifier("Real"),
-				},
-			},
-			wantErr: nil,
-		},
-	}
-
-	for _, tt := range tests {
-		l := NewTestLexer(tt.input)
-		p := New(l)
-		vars, err := p.parseVariables()
-		assert.Equal(t, err, tt.wantErr)
-		if err != nil {
-			continue
-		}
-		assert.Equal(t, vars, tt.wantVars)
-	}
-}
-
-func TestParseLabels(t *testing.T) {
-	tests := []struct {
-		input      []token.Token
-		wantLabels []ast.Label
-		wantErr    error
-	}{
-		{
-			input:      []token.Token{},
-			wantLabels: []ast.Label{},
-		},
-		{
-			input: []token.Token{
-				newToken(token.LABEL, "label"),
-				newToken(token.IDENT, "foo"),
-				newToken(token.SEMICOLON, ";"),
-			},
-			wantLabels: []ast.Label{
-				ast.Label{Identifier: "foo"},
-			},
-		},
-		{
-			input: []token.Token{
-				newToken(token.LABEL, "label"),
-				newToken(token.IDENT, "foo"),
-				newToken(token.COMMA, ","),
-				newToken(token.NUMBER, "12345"),
-				newToken(token.COMMA, ","),
-				newToken(token.IDENT, "lbl123"),
-				newToken(token.SEMICOLON, ";"),
-			},
-			wantLabels: []ast.Label{
-				ast.Label{Identifier: "foo"},
-				ast.Label{Identifier: "12345"},
-				ast.Label{Identifier: "lbl123"},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		l := NewTestLexer(tt.input)
-		p := New(l)
-		labels, err := p.parseLabels()
-		assert.Equal(t, err, tt.wantErr)
-		if err != nil {
-			continue
-		}
-		assert.Equal(t, labels, tt.wantLabels)
-	}
-}
-
-/*
-func TestParseConstants(t *testing.T) {
-	tests := []struct {
-		input         []token.Token
-		wantConstants []ast.Constant
-		wantErr       error
-	}{
-		{
-			input:         []token.Token{},
-			wantConstants: []ast.Constant{},
-		},
-		{
-			input: []token.Token{
-				newToken(token.CONST, "const"),
-				newToken(token.IDENT, "foo"),
-				newToken(token.EQUAL, "="),
-				newToken(token.NUMBER, "12345"),
-				newToken(token.SEMICOLON, ";"),
-			},
-			wantConstants: []ast.Constant{
-				ast.Constant{
-					Identifier: ast.ConstIdentifier("foo"),
-					Raw:        newToken(token.NUMBER, "12345"),
-				},
-			},
-		},
-		{
-			input: []token.Token{
-				newToken(token.CONST, "const"),
-				newToken(token.IDENT, "const_number"),
-				newToken(token.EQUAL, "="),
-				newToken(token.NUMBER, "123.45"),
-				newToken(token.SEMICOLON, ";"),
-				newToken(token.IDENT, "const_set"),
-				newToken(token.EQUAL, "="),
-				newToken(token.NIL, "nil"),
-				newToken(token.SEMICOLON, ";"),
-				newToken(token.IDENT, "const_char"),
-				newToken(toke.EQUAL, "="),
-				newToken(token.CHAR, "'a'"),
-				newToken(token.SEMICOLON, ";"),
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		l := NewTestLexer(tt.input)
-		p := New(l)
-		constants, err := p.parseConstants()
-		assert.Equal(t, err, tt.wantErr)
-		if err != nil {
-			continue
-		}
-		assert.Equal(t, constants, tt.wantConstants)
-	}
-}
-*/
+//func TestParseConstants(t *testing.T) {
+//	tests := []struct {
+//		input         []token.Token
+//		wantConstants []ast.Constant
+//		wantErr       error
+//	}{
+//		{
+//			input:         []token.Token{},
+//			wantConstants: []ast.Constant{},
+//		},
+//		{
+//			input: []token.Token{
+//				newToken(token.CONST, "const"),
+//				newToken(token.IDENT, "foo"),
+//				newToken(token.EQUAL, "="),
+//				newToken(token.NUMBER, "12345"),
+//				newToken(token.SEMICOLON, ";"),
+//			},
+//			wantConstants: []ast.Constant{
+//				ast.Constant{
+//					Identifier: ast.ConstIdentifier("foo"),
+//					Raw:        newToken(token.NUMBER, "12345"),
+//				},
+//			},
+//		},
+//		{
+//			input: []token.Token{
+//				newToken(token.CONST, "const"),
+//				newToken(token.IDENT, "const_number"),
+//				newToken(token.EQUAL, "="),
+//				newToken(token.NUMBER, "123.45"),
+//				newToken(token.SEMICOLON, ";"),
+//				newToken(token.IDENT, "const_set"),
+//				newToken(token.EQUAL, "="),
+//				newToken(token.NIL, "nil"),
+//				newToken(token.SEMICOLON, ";"),
+//				newToken(token.IDENT, "const_char"),
+//				newToken(toke.EQUAL, "="),
+//				newToken(token.CHAR, "'a'"),
+//				newToken(token.SEMICOLON, ";"),
+//			},
+//		},
+//	}
+//
+//	for _, tt := range tests {
+//		l := NewTestLexer(tt.input)
+//		p := New(l)
+//		constants, err := p.parseConstants()
+//		assert.Equal(t, err, tt.wantErr)
+//		if err != nil {
+//			continue
+//		}
+//		assert.Equal(t, constants, tt.wantConstants)
+//	}
+//}
 
 func TestParseFactor(t *testing.T) {
 	tests := []struct {
@@ -339,6 +337,50 @@ func TestParseFactor(t *testing.T) {
 				Expr: &ast.BoolLiteral{
 					Token: newToken(token.FALSE, "false"),
 					Value: false,
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.LBRACKET, "["),
+				newToken(token.NUMBER, "1"),
+				newToken(token.COMMA, ","),
+				newToken(token.NUMBER, "2"),
+				newToken(token.ASTERISK, "*"),
+				newToken(token.NUMBER, "2"),
+				newToken(token.COMMA, ","),
+				newToken(token.NUMBER, "1"),
+				newToken(token.DOTDOT, ".."),
+				newToken(token.NUMBER, "10"),
+				newToken(token.RBRACKET, "]"),
+			},
+			wantExpr: &ast.SetExpr{
+				Elements: []ast.Expression{
+					&ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "1"),
+						Value: ast.RawNumber("1"),
+					},
+					&ast.BinaryExpr{
+						Left: &ast.NumericLiteral{
+							Token: newToken(token.NUMBER, "2"),
+							Value: ast.RawNumber("2"),
+						},
+						Operator: newToken(token.ASTERISK, "*"),
+						Right: &ast.NumericLiteral{
+							Token: newToken(token.NUMBER, "2"),
+							Value: ast.RawNumber("2"),
+						},
+					},
+					&ast.ElementExpr{
+						Left: &ast.NumericLiteral{
+							Token: newToken(token.NUMBER, "1"),
+							Value: ast.RawNumber("1"),
+						},
+						Right: &ast.NumericLiteral{
+							Token: newToken(token.NUMBER, "10"),
+							Value: ast.RawNumber("10"),
+						},
+					},
 				},
 			},
 		},
@@ -718,5 +760,112 @@ func TestParseExpression(t *testing.T) {
 			continue
 		}
 		assert.Equal(t, expr, tt.wantExpr)
+	}
+}
+
+func TestParseStmt(t *testing.T) {
+	tests := []struct {
+		input    []token.Token
+		wantStmt ast.Statement
+		wantErr  error
+	}{
+		{
+			input: []token.Token{
+				newToken(token.IDENT, "foo"),
+				newToken(token.COLON, ":"),
+				newToken(token.IDENT, "a"),
+				newToken(token.NAMED, ":="),
+				newToken(token.NUMBER, "2"),
+				newToken(token.ASTERISK, "*"),
+				newToken(token.NUMBER, "2"),
+			},
+			wantStmt: &ast.LabeledStmt{
+				Label: &ast.IdentifierExpr{
+					Token: newToken(token.IDENT, "foo"),
+					Value: "foo",
+				},
+				Stmt: &ast.AssignmentStmt{
+					Identifier: &ast.IdentifierExpr{
+						Token: newToken(token.IDENT, "a"),
+						Value: "a",
+					},
+					Expr: &ast.BinaryExpr{
+						Left: &ast.NumericLiteral{
+							Token: newToken(token.NUMBER, "2"),
+							Value: ast.RawNumber("2"),
+						},
+						Operator: newToken(token.ASTERISK, "*"),
+						Right: &ast.NumericLiteral{
+							Token: newToken(token.NUMBER, "2"),
+							Value: ast.RawNumber("2"),
+						},
+					},
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.IDENT, "foo"),
+			},
+			wantStmt: &ast.CallStmt{
+				Identifier: &ast.IdentifierExpr{
+					Token: newToken(token.IDENT, "foo"),
+					Value: "foo",
+				},
+				Args: []ast.Expression{},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.IDENT, "foo"),
+				newToken(token.LPAREN, "("),
+				newToken(token.NUMBER, "42"),
+				newToken(token.COMMA, ","),
+				newToken(token.NUMBER, "2"),
+				newToken(token.ASTERISK, "*"),
+				newToken(token.NUMBER, "2"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "bar"),
+				newToken(token.RPAREN, ")"),
+			},
+			wantStmt: &ast.CallStmt{
+				Identifier: &ast.IdentifierExpr{
+					Token: newToken(token.IDENT, "foo"),
+					Value: "foo",
+				},
+				Args: []ast.Expression{
+					&ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "42"),
+						Value: ast.RawNumber("42"),
+					},
+					&ast.BinaryExpr{
+						Left: &ast.NumericLiteral{
+							Token: newToken(token.NUMBER, "2"),
+							Value: ast.RawNumber("2"),
+						},
+						Operator: newToken(token.ASTERISK, "*"),
+						Right: &ast.NumericLiteral{
+							Token: newToken(token.NUMBER, "2"),
+							Value: ast.RawNumber("2"),
+						},
+					},
+					&ast.IdentifierExpr{
+						Token: newToken(token.IDENT, "bar"),
+						Value: "bar",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		stmt, err := p.parseStmt()
+		assert.Equal(t, err, tt.wantErr)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, stmt, tt.wantStmt)
 	}
 }

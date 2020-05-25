@@ -27,23 +27,86 @@ func New(lexer lexer.Interface) *Parser {
 	return p
 }
 
-func (p *Parser) ParseProgram() (*ast.Program, error) {
-	program := &ast.Program{}
-	identifier, params, err := p.parseProgramHeader()
-	if err != nil {
-		return nil, err
+// <statement> ::= <unlabelled statement> | <label> : <unlabelled statement>
+// <unlabelled statement> ::= <simple statement> | <structured statement>
+// <simple statement> ::= <assignment statement> | <procedure statement> |
+//						  <go to statement> | <empty statement>
+// <assignment statement> ::= <variable> := <expression> |
+// 							  <function identifier> := <expression>
+// <structured statement> ::= <compound statement> | <conditional statement> |
+//							  <repetitive statement> | <with statement>
+// <compound statement> ::= begin <statement> {; <statement> } end;
+// <conditional statement> ::= <if statement> | <case statement>
+// <if statement> ::= if <expression> then <statement> |
+//					  if <expression> then <statement> else <statement>
+// <case statement> ::= case <expression> of <case list element> {; <case list element> } end
+// <case list element> ::= <case label list> : <statement> | <empty>
+// <case label list> ::= <case label> {, <case label> }
+// <repetitive statement> ::= <while statement> | <repeat statemant> | <for statement>
+// <while statement> ::= while <expression> do <statement>
+// <repeat statement> ::= repeat <statement> {; <statement>} until <expression>
+// <for statement> ::= for <control variable> := <for list> do <statement>
+// <with statement> ::= with <record variable list> do <statement>
+// <procedure statement> ::= <procedure identifier> |
+//							 <procedure identifier> (<actual parameter> {, <actual parameter> })
+// <actual parameter> ::= <expression> | <variable> | <procedure identifier> |
+//						  <function identifier>
+//
+func (p *Parser) parseStmt() (ast.Statement, error) {
+	if p.match(token.IDENT) {
+		ident := p.previous()
+		if p.match(token.COLON) {
+			// labeled stmt
+			stmt, err := p.parseStmt()
+			if err != nil {
+				return nil, err
+			}
+			return &ast.LabeledStmt{
+				Label: &ast.IdentifierExpr{
+					Token: ident,
+					Value: ident.Literal,
+				},
+				Stmt: stmt,
+			}, nil
+		} else if p.match(token.NAMED) {
+			expr, err := p.parseExpression()
+			if err != nil {
+				return nil, err
+			}
+			return &ast.AssignmentStmt{
+				Identifier: &ast.IdentifierExpr{
+					Token: ident,
+					Value: ident.Literal,
+				},
+				Expr: expr,
+			}, nil
+		}
+		args := []ast.Expression{}
+		// procedure or function call
+		if p.match(token.LPAREN) {
+			for {
+				expr, err := p.parseExpression()
+				if err != nil {
+					return nil, err
+				}
+				args = append(args, expr)
+				if !p.match(token.COMMA) {
+					break
+				}
+			}
+			if _, err := p.consume(token.RPAREN); err != nil {
+				return nil, err
+			}
+		}
+		return &ast.CallStmt{
+			Identifier: &ast.IdentifierExpr{
+				Token: ident,
+				Value: ident.Literal,
+			},
+			Args: args,
+		}, nil
 	}
-
-	block, err := p.parseBlock()
-	if err != nil {
-		return nil, err
-	}
-
-	program.Identifier = identifier
-	program.Params = params
-	program.Block = *block
-
-	return program, nil
+	return nil, fmt.Errorf("Unable to parse statement around: %s", p.peek().Literal)
 }
 
 // <factor> ::= <variable> | <unsigned constant> | ( <expression> ) |
@@ -106,8 +169,54 @@ func (p *Parser) parseFactor() (ast.Expression, error) {
 		}
 		return expr, nil
 	}
+	if p.match(token.LBRACKET) {
+		elements, err := p.parseElementList()
+		if err != nil {
+			return nil, err
+		}
+		set := &ast.SetExpr{
+			Elements: elements,
+		}
+		if _, err := p.consume(token.RBRACKET); err != nil {
+			return nil, err
+		}
+		return set, nil
+	}
 	return nil, fmt.Errorf("Unknown literal token: %s (%s)",
 		p.peek().Literal, p.peek().Type)
+}
+
+// <element list> ::= <element> {, <element> } | <empty>
+// 		<element> ::= <expression> | <expression> .. <expression>
+func (p *Parser) parseElementList() ([]ast.Expression, error) {
+	elements := []ast.Expression{}
+	expr, err := p.parseExpression()
+	if err != nil {
+		return nil, err
+	}
+	for {
+		if p.match(token.COMMA) {
+			elements = append(elements, expr)
+			expr, err = p.parseExpression()
+			if err != nil {
+				return nil, err
+			}
+		} else if p.match(token.DOTDOT) {
+			element := &ast.ElementExpr{
+				Left: expr,
+			}
+			expr, err = p.parseExpression()
+			if err != nil {
+				return nil, err
+			}
+			element.Right = expr
+			expr = element
+		} else {
+			break
+		}
+	}
+	elements = append(elements, expr)
+	return elements, nil
 }
 
 // <term> ::= <factor> | <term> <multiplying operator> <factor>
@@ -174,173 +283,6 @@ func (p *Parser) parseSimpleExpression() (ast.Expression, error) {
 		}
 	}
 	return expr, nil
-}
-
-func (p *Parser) parseProgramHeader() (ast.ProgramIdentifier, []ast.Identifier, error) {
-	if _, err := p.consume(token.PROGRAM); err != nil {
-		return "", nil, err
-	}
-	identifier, err := p.consume(token.IDENT)
-	if err != nil {
-		return "", nil, err
-	}
-	params := []ast.Identifier{}
-	if p.match(token.LPAREN) {
-		for p.check(token.IDENT) {
-			param, err := p.consume(token.IDENT)
-			if err != nil {
-				return "", nil, err
-			}
-			params = append(params, ast.Identifier(param.Literal))
-			if !p.match(token.COMMA) {
-				break
-			}
-		}
-		if _, err := p.consume(token.RPAREN); err != nil {
-			return "", nil, err
-		}
-	}
-	if _, err := p.consume(token.SEMICOLON); err != nil {
-		return "", nil, err
-	}
-	return ast.ProgramIdentifier(identifier.Literal), params, nil
-}
-
-func (p *Parser) parseBlock() (*ast.Block, error) {
-	block := &ast.Block{}
-	labels, err := p.parseLabels()
-	if err != nil {
-		return nil, err
-	}
-	constants, err := p.parseConstants()
-	if err != nil {
-		return nil, err
-	}
-	types, err := p.parseTypes()
-	if err != nil {
-		return nil, err
-	}
-	variables, err := p.parseVariables()
-	if err != nil {
-		return nil, err
-	}
-	callables, err := p.parseCallables()
-	if err != nil {
-		return nil, err
-	}
-	body, err := p.parseBody()
-	if err != nil {
-		return nil, err
-	}
-
-	block.Labels = labels
-	block.Constants = constants
-	block.Types = types
-	block.Variables = variables
-	block.Callables = callables
-	block.Body = body
-
-	return block, nil
-}
-
-func (p *Parser) parseVariables() ([]ast.Variable, error) {
-	variables := []ast.Variable{}
-	if !p.match(token.VAR) {
-		return variables, nil
-	}
-
-	for {
-		identifiers := []ast.VarIdentifier{}
-		for p.hasNext() {
-			identifier, err := p.consume(token.IDENT)
-			if err != nil {
-				return nil, err
-			}
-			identifiers = append(identifiers, ast.VarIdentifier(identifier.Literal))
-			if !p.check(token.COMMA) {
-				break
-			}
-			if _, err := p.consume(token.COMMA); err != nil {
-				return nil, err
-			}
-		}
-		if _, err := p.consume(token.COLON); err != nil {
-			return nil, err
-		}
-		typeIdentifier, err := p.consume(token.IDENT)
-		if err != nil {
-			return nil, err
-		}
-		for _, varident := range identifiers {
-			variables = append(variables, ast.Variable{
-				Identifier: varident,
-				Type:       ast.TypeIdentifier(typeIdentifier.Literal),
-			})
-		}
-		if _, err := p.consume(token.SEMICOLON); err != nil {
-			return nil, err
-		}
-		if !p.check(token.IDENT) {
-			break
-		}
-	}
-
-	return variables, nil
-}
-
-func (p *Parser) parseLabels() ([]ast.Label, error) {
-	labels := []ast.Label{}
-	if !p.match(token.LABEL) {
-		return labels, nil
-	}
-	for p.hasNext() {
-		ident, err := p.consume(token.IDENT, token.NUMBER)
-		if err != nil {
-			return nil, err
-		}
-		labels = append(labels, ast.Label{
-			Identifier: ast.LabelIdentifier(ident.Literal),
-		})
-		if !p.match(token.COMMA) {
-			break
-		}
-	}
-	if _, err := p.consume(token.SEMICOLON); err != nil {
-		return nil, err
-	}
-	return labels, nil
-}
-
-func (p *Parser) parseConstants() ([]ast.Constant, error) {
-	constants := []ast.Constant{}
-	if !p.match(token.CONST) {
-		return constants, nil
-	}
-	for p.hasNext() {
-		ident, err := p.consume(token.IDENT)
-		if err != nil {
-			return nil, err
-		}
-		if _, err := p.consume(token.EQUAL); err != nil {
-			return nil, err
-		}
-		value, err := p.parseExpression()
-		if err != nil {
-			return nil, err
-		}
-		constants = append(constants, ast.Constant{
-			Identifier: ast.ConstIdentifier(ident.Literal),
-			Raw:        value,
-		})
-		if _, err := p.consume(token.SEMICOLON); err != nil {
-			return nil, err
-		}
-		if !p.match(token.IDENT) {
-			break
-		}
-	}
-
-	return constants, nil
 }
 
 // <expression> ::= <simple expression> |

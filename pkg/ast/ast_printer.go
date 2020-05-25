@@ -3,6 +3,7 @@ package ast
 import (
 	"bytes"
 	"fmt"
+	"strings"
 )
 
 type AstPrinter struct{}
@@ -44,5 +45,54 @@ func (p *AstPrinter) VisitBinaryExpr(node *BinaryExpr) VisitorResult {
 	out.WriteString(left.(string))
 	out.WriteString(" " + node.Operator.Literal + " ")
 	out.WriteString(right.(string))
+	return out.String()
+}
+
+func (p *AstPrinter) VisitElementExpr(node *ElementExpr) VisitorResult {
+	left := node.Left.Visit(p)
+	right := node.Right.Visit(p)
+	return left.(string) + " .. " + right.(string)
+}
+
+func (p *AstPrinter) VisitSetExpr(node *SetExpr) VisitorResult {
+	chunks := make([]string, 0, len(node.Elements))
+	for _, el := range node.Elements {
+		chunk := el.Visit(p)
+		chunks = append(chunks, chunk.(string))
+	}
+	return "[" + strings.Join(chunks, ", ") + "]"
+}
+
+func (p *AstPrinter) VisitAssignmentStmt(node *AssignmentStmt) VisitorResult {
+	ident := node.Identifier.Visit(p)
+	expr := node.Expr.Visit(p)
+	return ident.(string) + " := " + expr.(string)
+}
+
+func (p *AstPrinter) VisitGotoStmt(node *GotoStmt) VisitorResult {
+	label := node.Label.Visit(p)
+	return "goto " + label.(string)
+}
+
+func (p *AstPrinter) VisitLabeledStmt(node *LabeledStmt) VisitorResult {
+	label := node.Label.Visit(p)
+	stmt := node.Stmt.Visit(p)
+	return label.(string) + " : " + stmt.(string)
+}
+
+func (p *AstPrinter) VisitCallStmt(node *CallStmt) VisitorResult {
+	var out bytes.Buffer
+	ident := node.Identifier.Visit(p)
+	out.WriteString(ident.(string))
+	if len(node.Args) > 0 {
+		out.WriteRune('(')
+		args := make([]string, 0, len(node.Args))
+		for _, arg := range node.Args {
+			s := arg.Visit(p)
+			args = append(args, s.(string))
+		}
+		out.WriteString(strings.Join(args, ", "))
+		out.WriteRune(')')
+	}
 	return out.String()
 }

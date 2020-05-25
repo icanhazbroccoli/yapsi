@@ -32,11 +32,20 @@ var _ Expression = (*BinaryExpr)(nil)
 func (b *BinaryExpr) expressionNode()                   {}
 func (b *BinaryExpr) Visit(v NodeVisitor) VisitorResult { return v.VisitBinaryExpr(b) }
 
-type ParamExpr struct {
-	Token token.Token
-	Value string
+type ElementExpr struct {
+	Left, Right Expression
 }
 
-func (p *ParamExpr) expressionNode()      {}
-func (p *ParamExpr) TokenLiteral() string { return p.Token.Literal }
-func (p *ParamExpr) String() string       { return p.Token.Literal }
+var _ Expression = (*ElementExpr)(nil)
+
+func (e *ElementExpr) expressionNode()                   {}
+func (e *ElementExpr) Visit(v NodeVisitor) VisitorResult { return v.VisitElementExpr(e) }
+
+type SetExpr struct {
+	Elements []Expression
+}
+
+var _ Expression = (*SetExpr)(nil)
+
+func (s *SetExpr) expressionNode()                   {}
+func (s *SetExpr) Visit(v NodeVisitor) VisitorResult { return v.VisitSetExpr(s) }
