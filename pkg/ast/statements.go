@@ -52,6 +52,18 @@ var _ (Statement) = (*CompoundStmt)(nil)
 func (s *CompoundStmt) statementNode()                    {}
 func (s *CompoundStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitCompoundStmt(s) }
 
+type IfStmt struct {
+	Token token.Token
+	Expr  Expression
+	Then  Statement
+	Else  Statement
+}
+
+var _ (Statement) = (*IfStmt)(nil)
+
+func (s *IfStmt) statementNode()                    {}
+func (s *IfStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitIfStmt(s) }
+
 /*
 type ProgramStmt struct {
 	Header *ProgramHeaderStmt

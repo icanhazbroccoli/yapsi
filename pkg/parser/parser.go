@@ -49,6 +49,33 @@ func (p *Parser) parseStmt() (ast.Statement, error) {
 			Statements: stmts,
 		}, nil
 	}
+	if p.match(token.IF) {
+		tok := p.previous()
+		expr, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := p.consume(token.THEN); err != nil {
+			return nil, err
+		}
+		thenstmt, err := p.parseStmt()
+		if err != nil {
+			return nil, err
+		}
+		ifstmt := &ast.IfStmt{
+			Token: tok,
+			Expr:  expr,
+			Then:  thenstmt,
+		}
+		if p.match(token.ELSE) {
+			elsestmt, err := p.parseStmt()
+			if err != nil {
+				return nil, err
+			}
+			ifstmt.Else = elsestmt
+		}
+		return ifstmt, nil
+	}
 	return p.parseSimpleStmt()
 }
 

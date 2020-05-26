@@ -106,6 +106,20 @@ func (p *AstPrinter) VisitCompoundStmt(node *CompoundStmt) VisitorResult {
 		chunks = append(chunks, chunk.(string))
 	}
 	out.WriteString(strings.Join(chunks, ";\n"))
-	out.WriteString("\nend\n")
+	out.WriteString("\nend")
+	return out.String()
+}
+
+func (p *AstPrinter) VisitIfStmt(node *IfStmt) VisitorResult {
+	var out bytes.Buffer
+	expr := node.Expr.Visit(p)
+	out.WriteString("if " + expr.(string) + " then\n")
+	thenstr := node.Then.Visit(p)
+	out.WriteString(thenstr.(string))
+	if node.Else != nil {
+		out.WriteString("\nelse\n")
+		elsestr := node.Else.Visit(p)
+		out.WriteString(elsestr.(string))
+	}
 	return out.String()
 }

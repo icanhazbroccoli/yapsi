@@ -936,6 +936,42 @@ func TestParseStmt(t *testing.T) {
 				},
 			},
 		},
+		{
+			input: []token.Token{
+				newToken(token.IF, "if"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.EQUAL, "="),
+				newToken(token.IDENT, "bar"),
+				newToken(token.THEN, "then"),
+				newToken(token.IDENT, "a"),
+				newToken(token.NAMED, ":="),
+				newToken(token.NUMBER, "1"),
+			},
+			wantStmt: &ast.IfStmt{
+				Token: newToken(token.IF, "if"),
+				Expr: &ast.BinaryExpr{
+					Left: &ast.IdentifierExpr{
+						Token: newToken(token.IDENT, "foo"),
+						Value: "foo",
+					},
+					Operator: newToken(token.EQUAL, "="),
+					Right: &ast.IdentifierExpr{
+						Token: newToken(token.IDENT, "bar"),
+						Value: "bar",
+					},
+				},
+				Then: &ast.AssignmentStmt{
+					Identifier: &ast.IdentifierExpr{
+						Token: newToken(token.IDENT, "a"),
+						Value: "a",
+					},
+					Expr: &ast.NumericLiteral{
+						Token: newToken(token.NUMBER, "1"),
+						Value: ast.RawNumber("1"),
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
