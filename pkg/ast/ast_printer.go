@@ -96,3 +96,16 @@ func (p *AstPrinter) VisitCallStmt(node *CallStmt) VisitorResult {
 	}
 	return out.String()
 }
+
+func (p *AstPrinter) VisitCompoundStmt(node *CompoundStmt) VisitorResult {
+	var out bytes.Buffer
+	out.WriteString("begin\n")
+	chunks := make([]string, 0, len(node.Statements))
+	for _, stmt := range node.Statements {
+		chunk := stmt.Visit(p)
+		chunks = append(chunks, chunk.(string))
+	}
+	out.WriteString(strings.Join(chunks, ";\n"))
+	out.WriteString("\nend\n")
+	return out.String()
+}

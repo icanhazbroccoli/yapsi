@@ -763,7 +763,7 @@ func TestParseExpression(t *testing.T) {
 	}
 }
 
-func TestParseStmt(t *testing.T) {
+func TestParseSimpleStmt(t *testing.T) {
 	tests := []struct {
 		input    []token.Token
 		wantStmt ast.Statement
@@ -852,6 +852,86 @@ func TestParseStmt(t *testing.T) {
 					&ast.IdentifierExpr{
 						Token: newToken(token.IDENT, "bar"),
 						Value: "bar",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		stmt, err := p.parseSimpleStmt()
+		assert.Equal(t, err, tt.wantErr)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, stmt, tt.wantStmt)
+	}
+}
+
+func TestParseStmt(t *testing.T) {
+	tests := []struct {
+		input    []token.Token
+		wantStmt ast.Statement
+		wantErr  error
+	}{
+		{
+			input: []token.Token{
+				newToken(token.BEGIN, "begin"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.NAMED, ":="),
+				newToken(token.NUMBER, "2"),
+				newToken(token.ASTERISK, "*"),
+				newToken(token.NUMBER, "2"),
+				newToken(token.SEMICOLON, ";"),
+				newToken(token.IDENT, "bar"),
+				newToken(token.LPAREN, "("),
+				newToken(token.NUMBER, "42"),
+				newToken(token.COMMA, ","),
+				newToken(token.MINUS, "-"),
+				newToken(token.NUMBER, "1"),
+				newToken(token.RPAREN, ")"),
+				newToken(token.END, "end"),
+			},
+			wantStmt: &ast.CompoundStmt{
+				Token: newToken(token.BEGIN, "begin"),
+				Statements: []ast.Statement{
+					&ast.AssignmentStmt{
+						Identifier: &ast.IdentifierExpr{
+							Token: newToken(token.IDENT, "foo"),
+							Value: "foo",
+						},
+						Expr: &ast.BinaryExpr{
+							Left: &ast.NumericLiteral{
+								Token: newToken(token.NUMBER, "2"),
+								Value: ast.RawNumber("2"),
+							},
+							Operator: newToken(token.ASTERISK, "*"),
+							Right: &ast.NumericLiteral{
+								Token: newToken(token.NUMBER, "2"),
+								Value: ast.RawNumber("2"),
+							},
+						},
+					},
+					&ast.CallStmt{
+						Identifier: &ast.IdentifierExpr{
+							Token: newToken(token.IDENT, "bar"),
+							Value: "bar",
+						},
+						Args: []ast.Expression{
+							&ast.NumericLiteral{
+								Token: newToken(token.NUMBER, "42"),
+								Value: ast.RawNumber("42"),
+							},
+							&ast.UnaryExpr{
+								Operator: newToken(token.MINUS, "-"),
+								Expr: &ast.NumericLiteral{
+									Token: newToken(token.NUMBER, "1"),
+									Value: ast.RawNumber("1"),
+								},
+							},
+						},
 					},
 				},
 			},

@@ -27,6 +27,31 @@ func New(lexer lexer.Interface) *Parser {
 	return p
 }
 
+func (p *Parser) parseStmt() (ast.Statement, error) {
+	if p.match(token.BEGIN) {
+		tok := p.previous()
+		stmts := []ast.Statement{}
+		for {
+			stmt, err := p.parseStmt()
+			if err != nil {
+				return nil, err
+			}
+			stmts = append(stmts, stmt)
+			if !p.match(token.SEMICOLON) {
+				break
+			}
+		}
+		if _, err := p.consume(token.END); err != nil {
+			return nil, err
+		}
+		return &ast.CompoundStmt{
+			Token:      tok,
+			Statements: stmts,
+		}, nil
+	}
+	return p.parseSimpleStmt()
+}
+
 // <statement> ::= <unlabelled statement> | <label> : <unlabelled statement>
 // <unlabelled statement> ::= <simple statement> | <structured statement>
 // <simple statement> ::= <assignment statement> | <procedure statement> |
@@ -52,12 +77,12 @@ func New(lexer lexer.Interface) *Parser {
 // <actual parameter> ::= <expression> | <variable> | <procedure identifier> |
 //						  <function identifier>
 //
-func (p *Parser) parseStmt() (ast.Statement, error) {
+func (p *Parser) parseSimpleStmt() (ast.Statement, error) {
 	if p.match(token.IDENT) {
 		ident := p.previous()
 		if p.match(token.COLON) {
 			// labeled stmt
-			stmt, err := p.parseStmt()
+			stmt, err := p.parseSimpleStmt()
 			if err != nil {
 				return nil, err
 			}
@@ -104,6 +129,18 @@ func (p *Parser) parseStmt() (ast.Statement, error) {
 				Value: ident.Literal,
 			},
 			Args: args,
+		}, nil
+	}
+	if p.match(token.GOTO) {
+		label, err := p.consume(token.IDENT)
+		if err != nil {
+			return nil, err
+		}
+		return &ast.GotoStmt{
+			Label: ast.IdentifierExpr{
+				Token: label,
+				Value: label.Literal,
+			},
 		}, nil
 	}
 	return nil, fmt.Errorf("Unable to parse statement around: %s", p.peek().Literal)

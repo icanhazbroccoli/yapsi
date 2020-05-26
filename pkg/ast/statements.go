@@ -1,5 +1,7 @@
 package ast
 
+import "yapsi/pkg/token"
+
 // <assignment statement> ::= <variable> := <expression> | <function identifier> := <expression>
 type AssignmentStmt struct {
 	Identifier *IdentifierExpr
@@ -39,6 +41,16 @@ var _ (Statement) = (*CallStmt)(nil)
 
 func (s *CallStmt) statementNode()                    {}
 func (s *CallStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitCallStmt(s) }
+
+type CompoundStmt struct {
+	Token      token.Token
+	Statements []Statement
+}
+
+var _ (Statement) = (*CompoundStmt)(nil)
+
+func (s *CompoundStmt) statementNode()                    {}
+func (s *CompoundStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitCompoundStmt(s) }
 
 /*
 type ProgramStmt struct {
