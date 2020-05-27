@@ -22,4 +22,6 @@ type NodeVisitor interface {
 	VisitIfStmt(*IfStmt) VisitorResult
 	VisitWhileStmt(*WhileStmt) VisitorResult
 	VisitRepeatStmt(*RepeatStmt) VisitorResult
+	VisitProgramStmt(*ProgramStmt) VisitorResult
+	VisitBlockStmt(*BlockStmt) VisitorResult
 }

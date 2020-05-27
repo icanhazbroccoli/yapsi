@@ -27,6 +27,72 @@ func New(lexer lexer.Interface) *Parser {
 	return p
 }
 
+func (p *Parser) ParseProgram() (*ast.ProgramStmt, error) {
+	if _, err := p.consume(token.PROGRAM); err != nil {
+		return nil, err
+	}
+	tok := p.previous()
+	ident, err := p.consume(token.IDENT)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := p.consume(token.SEMICOLON); err != nil {
+		return nil, err
+	}
+	block, err := p.parseBlock()
+	if err != nil {
+		return nil, err
+	}
+	if _, err := p.consume(token.PERIOD); err != nil {
+		return nil, err
+	}
+	return &ast.ProgramStmt{
+		Token: tok,
+		Identifier: &ast.IdentifierExpr{
+			Token: ident,
+			Value: ident.Literal,
+		},
+		Block: block,
+	}, nil
+}
+
+func (p *Parser) parseBlock() (*ast.BlockStmt, error) {
+	tok := p.previous() // FIXME
+	stmt, err := p.parseCompoundStmt()
+	if err != nil {
+		return nil, err
+	}
+	return &ast.BlockStmt{
+		Token:     tok,
+		Statement: stmt,
+	}, nil
+}
+
+func (p *Parser) parseCompoundStmt() (*ast.CompoundStmt, error) {
+	tok, err := p.consume(token.BEGIN)
+	if err != nil {
+		return nil, err
+	}
+	stmts := []ast.Statement{}
+	for {
+		stmt, err := p.parseStmt()
+		if err != nil {
+			return nil, err
+		}
+		stmts = append(stmts, stmt)
+		if !p.match(token.SEMICOLON) {
+			break
+		}
+	}
+	if _, err := p.consume(token.END); err != nil {
+		return nil, err
+	}
+	return &ast.CompoundStmt{
+		Token:      tok,
+		Statements: stmts,
+	}, nil
+}
+
 // <statement> ::= <unlabelled statement> | <label> : <unlabelled statement>
 // <unlabelled statement> ::= <simple statement> | <structured statement>
 // <structured statement> ::= <compound statement> | <conditional statement> |
@@ -45,26 +111,8 @@ func New(lexer lexer.Interface) *Parser {
 // <with statement> ::= with <record variable list> do <statement>
 //
 func (p *Parser) parseStmt() (ast.Statement, error) {
-	if p.match(token.BEGIN) {
-		tok := p.previous()
-		stmts := []ast.Statement{}
-		for {
-			stmt, err := p.parseStmt()
-			if err != nil {
-				return nil, err
-			}
-			stmts = append(stmts, stmt)
-			if !p.match(token.SEMICOLON) {
-				break
-			}
-		}
-		if _, err := p.consume(token.END); err != nil {
-			return nil, err
-		}
-		return &ast.CompoundStmt{
-			Token:      tok,
-			Statements: stmts,
-		}, nil
+	if p.check(token.BEGIN) {
+		return p.parseCompoundStmt()
 	}
 	if p.match(token.IF) {
 		tok := p.previous()
@@ -138,6 +186,9 @@ func (p *Parser) parseStmt() (ast.Statement, error) {
 			Statements: stmts,
 		}, nil
 	}
+	//TODO: for stmt
+	//TODO: case stmt
+	//TODO: with stmt
 	return p.parseSimpleStmt()
 }
 

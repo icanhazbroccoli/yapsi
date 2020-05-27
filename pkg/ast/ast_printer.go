@@ -145,3 +145,16 @@ func (p *AstPrinter) VisitRepeatStmt(node *RepeatStmt) VisitorResult {
 	out.WriteString(" until " + invariant.(string))
 	return out.String()
 }
+
+func (p *AstPrinter) VisitProgramStmt(node *ProgramStmt) VisitorResult {
+	var out bytes.Buffer
+	out.WriteString("program " + node.Identifier.Visit(p).(string) + ";\n\n")
+	out.WriteString(node.Block.Visit(p).(string) + ".")
+	return out.String()
+}
+
+func (p *AstPrinter) VisitBlockStmt(node *BlockStmt) VisitorResult {
+	var out bytes.Buffer
+	out.WriteString(node.Statement.Visit(p).(string))
+	return out.String()
+}

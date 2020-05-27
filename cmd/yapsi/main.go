@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"yapsi/pkg/ast"
 	"yapsi/pkg/lexer"
 	"yapsi/pkg/parser"
 )
@@ -17,9 +18,10 @@ func main() {
 	}
 	lex := lexer.New(bufio.NewReader(file))
 	p := parser.New(lex)
-	program := p.ParseProgram()
-	if err := p.Error(); err != nil {
+	program, err := p.ParseProgram()
+	if err != nil {
 		panic(err.Error())
 	}
-	fmt.Println(program.String())
+	printer := &ast.AstPrinter{}
+	fmt.Println(program.Visit(printer).(string))
 }
