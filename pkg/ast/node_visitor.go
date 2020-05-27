@@ -14,14 +14,14 @@ type NodeVisitor interface {
 	VisitElementExpr(*ElementExpr) VisitorResult
 	VisitSetExpr(*SetExpr) VisitorResult
 
+	VisitProgramStmt(*ProgramStmt) VisitorResult
+	VisitBlockStmt(*BlockStmt) VisitorResult
+	VisitCompoundStmt(*CompoundStmt) VisitorResult
 	VisitAssignmentStmt(*AssignmentStmt) VisitorResult
 	VisitGotoStmt(*GotoStmt) VisitorResult
 	VisitLabeledStmt(*LabeledStmt) VisitorResult
 	VisitCallStmt(*CallStmt) VisitorResult
-	VisitCompoundStmt(*CompoundStmt) VisitorResult
 	VisitIfStmt(*IfStmt) VisitorResult
 	VisitWhileStmt(*WhileStmt) VisitorResult
 	VisitRepeatStmt(*RepeatStmt) VisitorResult
-	VisitProgramStmt(*ProgramStmt) VisitorResult
-	VisitBlockStmt(*BlockStmt) VisitorResult
 }

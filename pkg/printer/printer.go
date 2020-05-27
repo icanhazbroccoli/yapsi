@@ -1,44 +1,42 @@
-package ast
+package printer
 
 import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	"yapsi/pkg/ast"
 )
 
 type AstPrinter struct{}
 
-var _ NodeVisitor = (*AstPrinter)(nil)
+var _ ast.NodeVisitor = (*AstPrinter)(nil)
 
-func (p *AstPrinter) VisitNumericLiteral(node *NumericLiteral) VisitorResult {
+func (p *AstPrinter) VisitNumericLiteral(node *ast.NumericLiteral) ast.VisitorResult {
 	return fmt.Sprintf("%s", node.Value)
 }
 
-func (p *AstPrinter) VisitStringLiteral(node *StringLiteral) VisitorResult {
-	return node.Value
+func (p *AstPrinter) VisitStringLiteral(node *ast.StringLiteral) ast.VisitorResult {
+	return "'" + node.Value + "'"
 }
 
-func (p *AstPrinter) VisitBoolLiteral(node *BoolLiteral) VisitorResult {
+func (p *AstPrinter) VisitBoolLiteral(node *ast.BoolLiteral) ast.VisitorResult {
 	return fmt.Sprintf("%t", node.Value)
 }
 
-func (p *AstPrinter) VisitCharLiteral(node *CharLiteral) VisitorResult {
+func (p *AstPrinter) VisitCharLiteral(node *ast.CharLiteral) ast.VisitorResult {
 	return fmt.Sprintf("%c", node.Value)
 }
 
-func (p *AstPrinter) VisitIdentifierExpr(node *IdentifierExpr) VisitorResult {
+func (p *AstPrinter) VisitIdentifierExpr(node *ast.IdentifierExpr) ast.VisitorResult {
 	return node.Value
 }
 
-func (p *AstPrinter) VisitUnaryExpr(node *UnaryExpr) VisitorResult {
-	var out bytes.Buffer
-	right := node.Expr.Visit(p)
-	out.WriteString(node.Operator.Literal + " ")
-	out.WriteString(right.(string))
-	return out.String()
+func (p *AstPrinter) VisitUnaryExpr(node *ast.UnaryExpr) ast.VisitorResult {
+	return node.Operator.Literal + node.Expr.Visit(p).(string)
 }
 
-func (p *AstPrinter) VisitBinaryExpr(node *BinaryExpr) VisitorResult {
+func (p *AstPrinter) VisitBinaryExpr(node *ast.BinaryExpr) ast.VisitorResult {
 	var out bytes.Buffer
 	left := node.Left.Visit(p)
 	right := node.Right.Visit(p)
@@ -48,13 +46,13 @@ func (p *AstPrinter) VisitBinaryExpr(node *BinaryExpr) VisitorResult {
 	return out.String()
 }
 
-func (p *AstPrinter) VisitElementExpr(node *ElementExpr) VisitorResult {
+func (p *AstPrinter) VisitElementExpr(node *ast.ElementExpr) ast.VisitorResult {
 	left := node.Left.Visit(p)
 	right := node.Right.Visit(p)
 	return left.(string) + " .. " + right.(string)
 }
 
-func (p *AstPrinter) VisitSetExpr(node *SetExpr) VisitorResult {
+func (p *AstPrinter) VisitSetExpr(node *ast.SetExpr) ast.VisitorResult {
 	chunks := make([]string, 0, len(node.Elements))
 	for _, el := range node.Elements {
 		chunk := el.Visit(p)
@@ -63,24 +61,24 @@ func (p *AstPrinter) VisitSetExpr(node *SetExpr) VisitorResult {
 	return "[" + strings.Join(chunks, ", ") + "]"
 }
 
-func (p *AstPrinter) VisitAssignmentStmt(node *AssignmentStmt) VisitorResult {
+func (p *AstPrinter) VisitAssignmentStmt(node *ast.AssignmentStmt) ast.VisitorResult {
 	ident := node.Identifier.Visit(p)
 	expr := node.Expr.Visit(p)
 	return ident.(string) + " := " + expr.(string)
 }
 
-func (p *AstPrinter) VisitGotoStmt(node *GotoStmt) VisitorResult {
+func (p *AstPrinter) VisitGotoStmt(node *ast.GotoStmt) ast.VisitorResult {
 	label := node.Label.Visit(p)
 	return "goto " + label.(string)
 }
 
-func (p *AstPrinter) VisitLabeledStmt(node *LabeledStmt) VisitorResult {
+func (p *AstPrinter) VisitLabeledStmt(node *ast.LabeledStmt) ast.VisitorResult {
 	label := node.Label.Visit(p)
 	stmt := node.Stmt.Visit(p)
 	return label.(string) + " : " + stmt.(string)
 }
 
-func (p *AstPrinter) VisitCallStmt(node *CallStmt) VisitorResult {
+func (p *AstPrinter) VisitCallStmt(node *ast.CallStmt) ast.VisitorResult {
 	var out bytes.Buffer
 	ident := node.Identifier.Visit(p)
 	out.WriteString(ident.(string))
@@ -97,7 +95,7 @@ func (p *AstPrinter) VisitCallStmt(node *CallStmt) VisitorResult {
 	return out.String()
 }
 
-func (p *AstPrinter) VisitCompoundStmt(node *CompoundStmt) VisitorResult {
+func (p *AstPrinter) VisitCompoundStmt(node *ast.CompoundStmt) ast.VisitorResult {
 	var out bytes.Buffer
 	out.WriteString("begin\n")
 	chunks := make([]string, 0, len(node.Statements))
@@ -110,7 +108,7 @@ func (p *AstPrinter) VisitCompoundStmt(node *CompoundStmt) VisitorResult {
 	return out.String()
 }
 
-func (p *AstPrinter) VisitIfStmt(node *IfStmt) VisitorResult {
+func (p *AstPrinter) VisitIfStmt(node *ast.IfStmt) ast.VisitorResult {
 	var out bytes.Buffer
 	expr := node.Expr.Visit(p)
 	out.WriteString("if " + expr.(string) + " then\n")
@@ -124,7 +122,7 @@ func (p *AstPrinter) VisitIfStmt(node *IfStmt) VisitorResult {
 	return out.String()
 }
 
-func (p *AstPrinter) VisitWhileStmt(node *WhileStmt) VisitorResult {
+func (p *AstPrinter) VisitWhileStmt(node *ast.WhileStmt) ast.VisitorResult {
 	var out bytes.Buffer
 	invariant := node.Invariant.Visit(p)
 	body := node.Body.Visit(p)
@@ -133,7 +131,7 @@ func (p *AstPrinter) VisitWhileStmt(node *WhileStmt) VisitorResult {
 	return out.String()
 }
 
-func (p *AstPrinter) VisitRepeatStmt(node *RepeatStmt) VisitorResult {
+func (p *AstPrinter) VisitRepeatStmt(node *ast.RepeatStmt) ast.VisitorResult {
 	var out bytes.Buffer
 	invariant := node.Invariant.Visit(p)
 	chunks := make([]string, 0, len(node.Statements))
@@ -146,14 +144,14 @@ func (p *AstPrinter) VisitRepeatStmt(node *RepeatStmt) VisitorResult {
 	return out.String()
 }
 
-func (p *AstPrinter) VisitProgramStmt(node *ProgramStmt) VisitorResult {
+func (p *AstPrinter) VisitProgramStmt(node *ast.ProgramStmt) ast.VisitorResult {
 	var out bytes.Buffer
 	out.WriteString("program " + node.Identifier.Visit(p).(string) + ";\n\n")
 	out.WriteString(node.Block.Visit(p).(string) + ".")
 	return out.String()
 }
 
-func (p *AstPrinter) VisitBlockStmt(node *BlockStmt) VisitorResult {
+func (p *AstPrinter) VisitBlockStmt(node *ast.BlockStmt) ast.VisitorResult {
 	var out bytes.Buffer
 	out.WriteString(node.Statement.Visit(p).(string))
 	return out.String()

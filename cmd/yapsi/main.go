@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"yapsi/pkg/ast"
 	"yapsi/pkg/lexer"
 	"yapsi/pkg/parser"
+	"yapsi/pkg/printer"
 )
 
 func main() {
@@ -22,6 +22,6 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-	printer := &ast.AstPrinter{}
+	printer := &printer.AstPrinter{}
 	fmt.Println(program.Visit(printer).(string))
 }

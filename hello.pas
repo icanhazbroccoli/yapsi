@@ -3,6 +3,7 @@ program HelloWorld;
 begin
 
     i := 0;
+    foo := -12.345;
 
     while i < 10 do
     begin

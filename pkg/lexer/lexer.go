@@ -142,6 +142,7 @@ func (lex *Lexer) Pos() (int, int) {
 	return lex.line, lex.col
 }
 
+//TODO: add support for exp format: 123.45E-05
 func (lex *Lexer) readNumber() string {
 	var buf bytes.Buffer
 	for {
