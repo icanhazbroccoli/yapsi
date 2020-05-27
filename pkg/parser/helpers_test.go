@@ -67,3 +67,10 @@ func newBool(val bool) *ast.BoolLiteral {
 		Value: false,
 	}
 }
+
+func newString(s string) *ast.StringLiteral {
+	return &ast.StringLiteral{
+		Token: newToken(token.STRING, s),
+		Value: s,
+	}
+}

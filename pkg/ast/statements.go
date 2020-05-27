@@ -75,6 +75,17 @@ var _ Statement = (*WhileStmt)(nil)
 func (s *WhileStmt) statementNode()                    {}
 func (s *WhileStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitWhileStmt(s) }
 
+type RepeatStmt struct {
+	Token      token.Token
+	Invariant  Expression
+	Statements []Statement
+}
+
+var _ Statement = (*RepeatStmt)(nil)
+
+func (s *RepeatStmt) statementNode()                    {}
+func (s *RepeatStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitRepeatStmt(s) }
+
 /*
 type ProgramStmt struct {
 	Header *ProgramHeaderStmt

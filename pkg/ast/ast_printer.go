@@ -132,3 +132,16 @@ func (p *AstPrinter) VisitWhileStmt(node *WhileStmt) VisitorResult {
 	out.WriteString(body.(string))
 	return out.String()
 }
+
+func (p *AstPrinter) VisitRepeatStmt(node *RepeatStmt) VisitorResult {
+	var out bytes.Buffer
+	invariant := node.Invariant.Visit(p)
+	chunks := make([]string, 0, len(node.Statements))
+	for _, stmt := range node.Statements {
+		chunks = append(chunks, stmt.Visit(p).(string))
+	}
+	out.WriteString("repeat\n")
+	out.WriteString(strings.Join(chunks, ";\n"))
+	out.WriteString(" until " + invariant.(string))
+	return out.String()
+}

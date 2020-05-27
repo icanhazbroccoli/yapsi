@@ -114,9 +114,16 @@ func (p *Parser) parseStmt() (ast.Statement, error) {
 	}
 	if p.match(token.REPEAT) {
 		tok := p.previous()
-		body, err := p.parseStmt()
-		if err != nil {
-			return nil, err
+		stmts := []ast.Statement{}
+		for {
+			stmt, err := p.parseStmt()
+			if err != nil {
+				return nil, err
+			}
+			stmts = append(stmts, stmt)
+			if !p.match(token.SEMICOLON) {
+				break
+			}
 		}
 		if _, err := p.consume(token.UNTIL); err != nil {
 			return nil, err
@@ -125,10 +132,10 @@ func (p *Parser) parseStmt() (ast.Statement, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &ast.WhileStmt{
-			Token:     tok,
-			Invariant: invariant,
-			Body:      body,
+		return &ast.RepeatStmt{
+			Token:      tok,
+			Invariant:  invariant,
+			Statements: stmts,
 		}, nil
 	}
 	return p.parseSimpleStmt()

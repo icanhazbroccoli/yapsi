@@ -839,24 +839,37 @@ func TestParseStmt(t *testing.T) {
 				newToken(token.IDENT, "foo"),
 				newToken(token.PLUS, "+"),
 				newToken(token.NUMBER, "1"),
+				newToken(token.SEMICOLON, ";"),
+				newToken(token.IDENT, "writeln"),
+				newToken(token.LPAREN, "("),
+				newToken(token.STRING, "hello world"),
+				newToken(token.RPAREN, ")"),
 				newToken(token.UNTIL, "until"),
 				newToken(token.IDENT, "foo"),
 				newToken(token.LTEQL, "<="),
 				newToken(token.NUMBER, "10"),
 			},
-			wantStmt: &ast.WhileStmt{
+			wantStmt: &ast.RepeatStmt{
 				Token: newToken(token.REPEAT, "repeat"),
 				Invariant: &ast.BinaryExpr{
 					Left:     newIdent("foo"),
 					Operator: newToken(token.LTEQL, "<="),
 					Right:    newNumber("10"),
 				},
-				Body: &ast.AssignmentStmt{
-					Identifier: newIdent("foo"),
-					Expr: &ast.BinaryExpr{
-						Left:     newIdent("foo"),
-						Operator: newToken(token.PLUS, "+"),
-						Right:    newNumber("1"),
+				Statements: []ast.Statement{
+					&ast.AssignmentStmt{
+						Identifier: newIdent("foo"),
+						Expr: &ast.BinaryExpr{
+							Left:     newIdent("foo"),
+							Operator: newToken(token.PLUS, "+"),
+							Right:    newNumber("1"),
+						},
+					},
+					&ast.CallStmt{
+						Identifier: newIdent("writeln"),
+						Args: []ast.Expression{
+							newString("hello world"),
+						},
 					},
 				},
 			},
