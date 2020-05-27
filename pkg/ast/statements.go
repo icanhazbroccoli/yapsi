@@ -64,6 +64,17 @@ var _ (Statement) = (*IfStmt)(nil)
 func (s *IfStmt) statementNode()                    {}
 func (s *IfStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitIfStmt(s) }
 
+type WhileStmt struct {
+	Token     token.Token
+	Invariant Expression
+	Body      Statement
+}
+
+var _ Statement = (*WhileStmt)(nil)
+
+func (s *WhileStmt) statementNode()                    {}
+func (s *WhileStmt) Visit(v NodeVisitor) VisitorResult { return v.VisitWhileStmt(s) }
+
 /*
 type ProgramStmt struct {
 	Header *ProgramHeaderStmt

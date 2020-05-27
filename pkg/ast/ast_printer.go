@@ -123,3 +123,12 @@ func (p *AstPrinter) VisitIfStmt(node *IfStmt) VisitorResult {
 	}
 	return out.String()
 }
+
+func (p *AstPrinter) VisitWhileStmt(node *WhileStmt) VisitorResult {
+	var out bytes.Buffer
+	invariant := node.Invariant.Visit(p)
+	body := node.Body.Visit(p)
+	out.WriteString("while " + invariant.(string) + " do\n")
+	out.WriteString(body.(string))
+	return out.String()
+}

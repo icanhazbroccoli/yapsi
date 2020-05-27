@@ -20,4 +20,5 @@ type NodeVisitor interface {
 	VisitCallStmt(*CallStmt) VisitorResult
 	VisitCompoundStmt(*CompoundStmt) VisitorResult
 	VisitIfStmt(*IfStmt) VisitorResult
+	VisitWhileStmt(*WhileStmt) VisitorResult
 }

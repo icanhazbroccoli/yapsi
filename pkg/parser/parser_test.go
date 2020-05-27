@@ -356,30 +356,15 @@ func TestParseFactor(t *testing.T) {
 			},
 			wantExpr: &ast.SetExpr{
 				Elements: []ast.Expression{
-					&ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "1"),
-						Value: ast.RawNumber("1"),
-					},
+					newNumber("1"),
 					&ast.BinaryExpr{
-						Left: &ast.NumericLiteral{
-							Token: newToken(token.NUMBER, "2"),
-							Value: ast.RawNumber("2"),
-						},
+						Left:     newNumber("2"),
 						Operator: newToken(token.ASTERISK, "*"),
-						Right: &ast.NumericLiteral{
-							Token: newToken(token.NUMBER, "2"),
-							Value: ast.RawNumber("2"),
-						},
+						Right:    newNumber("2"),
 					},
 					&ast.ElementExpr{
-						Left: &ast.NumericLiteral{
-							Token: newToken(token.NUMBER, "1"),
-							Value: ast.RawNumber("1"),
-						},
-						Right: &ast.NumericLiteral{
-							Token: newToken(token.NUMBER, "10"),
-							Value: ast.RawNumber("10"),
-						},
+						Left:  newNumber("1"),
+						Right: newNumber("10"),
 					},
 				},
 			},
@@ -408,10 +393,7 @@ func TestParseTermExpr(t *testing.T) {
 			input: []token.Token{
 				newToken(token.NUMBER, "1"),
 			},
-			wantExpr: &ast.NumericLiteral{
-				Token: newToken(token.NUMBER, "1"),
-				Value: ast.RawNumber("1"),
-			},
+			wantExpr: newNumber("1"),
 		},
 		{
 			input: []token.Token{
@@ -420,15 +402,9 @@ func TestParseTermExpr(t *testing.T) {
 				newToken(token.NUMBER, "2"),
 			},
 			wantExpr: &ast.BinaryExpr{
-				Left: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "1"),
-					Value: ast.RawNumber("1"),
-				},
+				Left:     newNumber("1"),
 				Operator: newToken(token.ASTERISK, "*"),
-				Right: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "2"),
-					Value: ast.RawNumber("2"),
-				},
+				Right:    newNumber("2"),
 			},
 		},
 		{
@@ -438,15 +414,9 @@ func TestParseTermExpr(t *testing.T) {
 				newToken(token.NUMBER, "3"),
 			},
 			wantExpr: &ast.BinaryExpr{
-				Left: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "2"),
-					Value: ast.RawNumber("2"),
-				},
+				Left:     newNumber("2"),
 				Operator: newToken(token.DIV, "div"),
-				Right: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "3"),
-					Value: ast.RawNumber("3"),
-				},
+				Right:    newNumber("3"),
 			},
 		},
 		{
@@ -456,15 +426,9 @@ func TestParseTermExpr(t *testing.T) {
 				newToken(token.NUMBER, "3"),
 			},
 			wantExpr: &ast.BinaryExpr{
-				Left: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "2"),
-					Value: ast.RawNumber("2"),
-				},
+				Left:     newNumber("2"),
 				Operator: newToken(token.MOD, "mod"),
-				Right: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "3"),
-					Value: ast.RawNumber("3"),
-				},
+				Right:    newNumber("3"),
 			},
 		},
 		{
@@ -476,21 +440,12 @@ func TestParseTermExpr(t *testing.T) {
 				newToken(token.NUMBER, "3"),
 			},
 			wantExpr: &ast.BinaryExpr{
-				Left: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "1"),
-					Value: ast.RawNumber("1"),
-				},
+				Left:     newNumber("1"),
 				Operator: newToken(token.ASTERISK, "*"),
 				Right: &ast.BinaryExpr{
-					Left: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "2"),
-						Value: ast.RawNumber("2"),
-					},
+					Left:     newNumber("2"),
 					Operator: newToken(token.SLASH, "/"),
-					Right: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "3"),
-						Value: ast.RawNumber("3"),
-					},
+					Right:    newNumber("3"),
 				},
 			},
 		},
@@ -503,21 +458,12 @@ func TestParseTermExpr(t *testing.T) {
 				newToken(token.TRUE, "true"),
 			},
 			wantExpr: &ast.BinaryExpr{
-				Left: &ast.BoolLiteral{
-					Token: newToken(token.TRUE, "true"),
-					Value: true,
-				},
+				Left:     newBool(true),
 				Operator: newToken(token.AND, "and"),
 				Right: &ast.BinaryExpr{
-					Left: &ast.BoolLiteral{
-						Token: newToken(token.FALSE, "false"),
-						Value: false,
-					},
+					Left:     newBool(false),
 					Operator: newToken(token.AND, "and"),
-					Right: &ast.BoolLiteral{
-						Token: newToken(token.TRUE, "true"),
-						Value: true,
-					},
+					Right:    newBool(true),
 				},
 			},
 		},
@@ -557,10 +503,7 @@ func TestParseSimpleExpression(t *testing.T) {
 			},
 			wantExpr: &ast.UnaryExpr{
 				Operator: newToken(token.MINUS, "-"),
-				Expr: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "42"),
-					Value: ast.RawNumber("42"),
-				},
+				Expr:     newNumber("42"),
 			},
 		},
 		{
@@ -570,10 +513,7 @@ func TestParseSimpleExpression(t *testing.T) {
 			},
 			wantExpr: &ast.UnaryExpr{
 				Operator: newToken(token.PLUS, "+"),
-				Expr: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "42"),
-					Value: ast.RawNumber("42"),
-				},
+				Expr:     newNumber("42"),
 			},
 		},
 		{
@@ -583,15 +523,9 @@ func TestParseSimpleExpression(t *testing.T) {
 				newToken(token.NUMBER, "2"),
 			},
 			wantExpr: &ast.BinaryExpr{
-				Left: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "1"),
-					Value: ast.RawNumber("1"),
-				},
+				Left:     newNumber("1"),
 				Operator: newToken(token.PLUS, "+"),
-				Right: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "2"),
-					Value: ast.RawNumber("2"),
-				},
+				Right:    newNumber("2"),
 			},
 		},
 		{
@@ -601,15 +535,9 @@ func TestParseSimpleExpression(t *testing.T) {
 				newToken(token.NUMBER, "2"),
 			},
 			wantExpr: &ast.BinaryExpr{
-				Left: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "1"),
-					Value: ast.RawNumber("1"),
-				},
+				Left:     newNumber("1"),
 				Operator: newToken(token.MINUS, "-"),
-				Right: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "2"),
-					Value: ast.RawNumber("2"),
-				},
+				Right:    newNumber("2"),
 			},
 		},
 		{
@@ -619,15 +547,9 @@ func TestParseSimpleExpression(t *testing.T) {
 				newToken(token.FALSE, "false"),
 			},
 			wantExpr: &ast.BinaryExpr{
-				Left: &ast.BoolLiteral{
-					Token: newToken(token.TRUE, "true"),
-					Value: true,
-				},
+				Left:     newBool(true),
 				Operator: newToken(token.OR, "or"),
-				Right: &ast.BoolLiteral{
-					Token: newToken(token.FALSE, "false"),
-					Value: false,
-				},
+				Right:    newBool(false),
 			},
 		},
 		{
@@ -639,21 +561,12 @@ func TestParseSimpleExpression(t *testing.T) {
 				newToken(token.NUMBER, "3"),
 			},
 			wantExpr: &ast.BinaryExpr{
-				Left: &ast.NumericLiteral{
-					Token: newToken(token.NUMBER, "1"),
-					Value: ast.RawNumber("1"),
-				},
+				Left:     newNumber("1"),
 				Operator: newToken(token.PLUS, "+"),
 				Right: &ast.BinaryExpr{
-					Left: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "2"),
-						Value: ast.RawNumber("2"),
-					},
+					Left:     newNumber("2"),
 					Operator: newToken(token.ASTERISK, "*"),
-					Right: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "3"),
-						Value: ast.RawNumber("3"),
-					},
+					Right:    newNumber("3"),
 				},
 			},
 		},
@@ -669,27 +582,15 @@ func TestParseSimpleExpression(t *testing.T) {
 			},
 			wantExpr: &ast.BinaryExpr{
 				Left: &ast.BinaryExpr{
-					Left: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "1"),
-						Value: ast.RawNumber("1"),
-					},
+					Left:     newNumber("1"),
 					Operator: newToken(token.SLASH, "/"),
-					Right: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "4"),
-						Value: ast.RawNumber("4"),
-					},
+					Right:    newNumber("4"),
 				},
 				Operator: newToken(token.PLUS, "+"),
 				Right: &ast.BinaryExpr{
-					Left: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "2"),
-						Value: ast.RawNumber("2"),
-					},
+					Left:     newNumber("2"),
 					Operator: newToken(token.ASTERISK, "*"),
-					Right: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "3"),
-						Value: ast.RawNumber("3"),
-					},
+					Right:    newNumber("3"),
 				},
 			},
 		},
@@ -725,27 +626,15 @@ func TestParseExpression(t *testing.T) {
 			},
 			wantExpr: &ast.BinaryExpr{
 				Left: &ast.BinaryExpr{
-					Left: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "2"),
-						Value: ast.RawNumber("2"),
-					},
+					Left:     newNumber("2"),
 					Operator: newToken(token.ASTERISK, "*"),
-					Right: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "2"),
-						Value: ast.RawNumber("2"),
-					},
+					Right:    newNumber("2"),
 				},
 				Operator: newToken(token.GTEQL, ">="),
 				Right: &ast.BinaryExpr{
-					Left: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "1"),
-						Value: ast.RawNumber("1"),
-					},
+					Left:     newNumber("1"),
 					Operator: newToken(token.PLUS, "+"),
-					Right: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "3"),
-						Value: ast.RawNumber("3"),
-					},
+					Right:    newNumber("3"),
 				},
 			},
 		},
@@ -780,25 +669,13 @@ func TestParseSimpleStmt(t *testing.T) {
 				newToken(token.NUMBER, "2"),
 			},
 			wantStmt: &ast.LabeledStmt{
-				Label: &ast.IdentifierExpr{
-					Token: newToken(token.IDENT, "foo"),
-					Value: "foo",
-				},
+				Label: newIdent("foo"),
 				Stmt: &ast.AssignmentStmt{
-					Identifier: &ast.IdentifierExpr{
-						Token: newToken(token.IDENT, "a"),
-						Value: "a",
-					},
+					Identifier: newIdent("a"),
 					Expr: &ast.BinaryExpr{
-						Left: &ast.NumericLiteral{
-							Token: newToken(token.NUMBER, "2"),
-							Value: ast.RawNumber("2"),
-						},
+						Left:     newNumber("2"),
 						Operator: newToken(token.ASTERISK, "*"),
-						Right: &ast.NumericLiteral{
-							Token: newToken(token.NUMBER, "2"),
-							Value: ast.RawNumber("2"),
-						},
+						Right:    newNumber("2"),
 					},
 				},
 			},
@@ -808,11 +685,8 @@ func TestParseSimpleStmt(t *testing.T) {
 				newToken(token.IDENT, "foo"),
 			},
 			wantStmt: &ast.CallStmt{
-				Identifier: &ast.IdentifierExpr{
-					Token: newToken(token.IDENT, "foo"),
-					Value: "foo",
-				},
-				Args: []ast.Expression{},
+				Identifier: newIdent("foo"),
+				Args:       []ast.Expression{},
 			},
 		},
 		{
@@ -829,30 +703,15 @@ func TestParseSimpleStmt(t *testing.T) {
 				newToken(token.RPAREN, ")"),
 			},
 			wantStmt: &ast.CallStmt{
-				Identifier: &ast.IdentifierExpr{
-					Token: newToken(token.IDENT, "foo"),
-					Value: "foo",
-				},
+				Identifier: newIdent("foo"),
 				Args: []ast.Expression{
-					&ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "42"),
-						Value: ast.RawNumber("42"),
-					},
+					newNumber("42"),
 					&ast.BinaryExpr{
-						Left: &ast.NumericLiteral{
-							Token: newToken(token.NUMBER, "2"),
-							Value: ast.RawNumber("2"),
-						},
+						Left:     newNumber("2"),
 						Operator: newToken(token.ASTERISK, "*"),
-						Right: &ast.NumericLiteral{
-							Token: newToken(token.NUMBER, "2"),
-							Value: ast.RawNumber("2"),
-						},
+						Right:    newNumber("2"),
 					},
-					&ast.IdentifierExpr{
-						Token: newToken(token.IDENT, "bar"),
-						Value: "bar",
-					},
+					newIdent("bar"),
 				},
 			},
 		},
@@ -898,38 +757,20 @@ func TestParseStmt(t *testing.T) {
 				Token: newToken(token.BEGIN, "begin"),
 				Statements: []ast.Statement{
 					&ast.AssignmentStmt{
-						Identifier: &ast.IdentifierExpr{
-							Token: newToken(token.IDENT, "foo"),
-							Value: "foo",
-						},
+						Identifier: newIdent("foo"),
 						Expr: &ast.BinaryExpr{
-							Left: &ast.NumericLiteral{
-								Token: newToken(token.NUMBER, "2"),
-								Value: ast.RawNumber("2"),
-							},
+							Left:     newNumber("2"),
 							Operator: newToken(token.ASTERISK, "*"),
-							Right: &ast.NumericLiteral{
-								Token: newToken(token.NUMBER, "2"),
-								Value: ast.RawNumber("2"),
-							},
+							Right:    newNumber("2"),
 						},
 					},
 					&ast.CallStmt{
-						Identifier: &ast.IdentifierExpr{
-							Token: newToken(token.IDENT, "bar"),
-							Value: "bar",
-						},
+						Identifier: newIdent("bar"),
 						Args: []ast.Expression{
-							&ast.NumericLiteral{
-								Token: newToken(token.NUMBER, "42"),
-								Value: ast.RawNumber("42"),
-							},
+							newNumber("42"),
 							&ast.UnaryExpr{
 								Operator: newToken(token.MINUS, "-"),
-								Expr: &ast.NumericLiteral{
-									Token: newToken(token.NUMBER, "1"),
-									Value: ast.RawNumber("1"),
-								},
+								Expr:     newNumber("1"),
 							},
 						},
 					},
@@ -950,24 +791,42 @@ func TestParseStmt(t *testing.T) {
 			wantStmt: &ast.IfStmt{
 				Token: newToken(token.IF, "if"),
 				Expr: &ast.BinaryExpr{
-					Left: &ast.IdentifierExpr{
-						Token: newToken(token.IDENT, "foo"),
-						Value: "foo",
-					},
+					Left:     newIdent("foo"),
 					Operator: newToken(token.EQUAL, "="),
-					Right: &ast.IdentifierExpr{
-						Token: newToken(token.IDENT, "bar"),
-						Value: "bar",
-					},
+					Right:    newIdent("bar"),
 				},
 				Then: &ast.AssignmentStmt{
-					Identifier: &ast.IdentifierExpr{
-						Token: newToken(token.IDENT, "a"),
-						Value: "a",
-					},
-					Expr: &ast.NumericLiteral{
-						Token: newToken(token.NUMBER, "1"),
-						Value: ast.RawNumber("1"),
+					Identifier: newIdent("a"),
+					Expr:       newNumber("1"),
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.WHILE, "while"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.LTEQL, "<="),
+				newToken(token.NUMBER, "10"),
+				newToken(token.DO, "do"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.NAMED, ":="),
+				newToken(token.IDENT, "foo"),
+				newToken(token.PLUS, "+"),
+				newToken(token.NUMBER, "1"),
+			},
+			wantStmt: &ast.WhileStmt{
+				Token: newToken(token.WHILE, "while"),
+				Invariant: &ast.BinaryExpr{
+					Left:     newIdent("foo"),
+					Operator: newToken(token.LTEQL, "<="),
+					Right:    newNumber("10"),
+				},
+				Body: &ast.AssignmentStmt{
+					Identifier: newIdent("foo"),
+					Expr: &ast.BinaryExpr{
+						Left:     newIdent("foo"),
+						Operator: newToken(token.PLUS, "+"),
+						Right:    newNumber("1"),
 					},
 				},
 			},

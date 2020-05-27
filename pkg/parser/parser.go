@@ -27,6 +27,23 @@ func New(lexer lexer.Interface) *Parser {
 	return p
 }
 
+// <statement> ::= <unlabelled statement> | <label> : <unlabelled statement>
+// <unlabelled statement> ::= <simple statement> | <structured statement>
+// <structured statement> ::= <compound statement> | <conditional statement> |
+//							  <repetitive statement> | <with statement>
+// <compound statement> ::= begin <statement> {; <statement> } end;
+// <conditional statement> ::= <if statement> | <case statement>
+// <if statement> ::= if <expression> then <statement> |
+//					  if <expression> then <statement> else <statement>
+// <case statement> ::= case <expression> of <case list element> {; <case list element> } end
+// <case list element> ::= <case label list> : <statement> | <empty>
+// <case label list> ::= <case label> {, <case label> }
+// <repetitive statement> ::= <while statement> | <repeat statemant> | <for statement>
+// <while statement> ::= while <expression> do <statement>
+// <repeat statement> ::= repeat <statement> {; <statement>} until <expression>
+// <for statement> ::= for <control variable> := <for list> do <statement>
+// <with statement> ::= with <record variable list> do <statement>
+//
 func (p *Parser) parseStmt() (ast.Statement, error) {
 	if p.match(token.BEGIN) {
 		tok := p.previous()
@@ -76,29 +93,32 @@ func (p *Parser) parseStmt() (ast.Statement, error) {
 		}
 		return ifstmt, nil
 	}
+	if p.match(token.WHILE) {
+		tok := p.previous()
+		invariant, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := p.consume(token.DO); err != nil {
+			return nil, err
+		}
+		body, err := p.parseStmt()
+		if err != nil {
+			return nil, err
+		}
+		return &ast.WhileStmt{
+			Token:     tok,
+			Invariant: invariant,
+			Body:      body,
+		}, nil
+	}
 	return p.parseSimpleStmt()
 }
 
-// <statement> ::= <unlabelled statement> | <label> : <unlabelled statement>
-// <unlabelled statement> ::= <simple statement> | <structured statement>
 // <simple statement> ::= <assignment statement> | <procedure statement> |
 //						  <go to statement> | <empty statement>
 // <assignment statement> ::= <variable> := <expression> |
 // 							  <function identifier> := <expression>
-// <structured statement> ::= <compound statement> | <conditional statement> |
-//							  <repetitive statement> | <with statement>
-// <compound statement> ::= begin <statement> {; <statement> } end;
-// <conditional statement> ::= <if statement> | <case statement>
-// <if statement> ::= if <expression> then <statement> |
-//					  if <expression> then <statement> else <statement>
-// <case statement> ::= case <expression> of <case list element> {; <case list element> } end
-// <case list element> ::= <case label list> : <statement> | <empty>
-// <case label list> ::= <case label> {, <case label> }
-// <repetitive statement> ::= <while statement> | <repeat statemant> | <for statement>
-// <while statement> ::= while <expression> do <statement>
-// <repeat statement> ::= repeat <statement> {; <statement>} until <expression>
-// <for statement> ::= for <control variable> := <for list> do <statement>
-// <with statement> ::= with <record variable list> do <statement>
 // <procedure statement> ::= <procedure identifier> |
 //							 <procedure identifier> (<actual parameter> {, <actual parameter> })
 // <actual parameter> ::= <expression> | <variable> | <procedure identifier> |
