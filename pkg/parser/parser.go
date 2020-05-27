@@ -112,6 +112,25 @@ func (p *Parser) parseStmt() (ast.Statement, error) {
 			Body:      body,
 		}, nil
 	}
+	if p.match(token.REPEAT) {
+		tok := p.previous()
+		body, err := p.parseStmt()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := p.consume(token.UNTIL); err != nil {
+			return nil, err
+		}
+		invariant, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		return &ast.WhileStmt{
+			Token:     tok,
+			Invariant: invariant,
+			Body:      body,
+		}, nil
+	}
 	return p.parseSimpleStmt()
 }
 

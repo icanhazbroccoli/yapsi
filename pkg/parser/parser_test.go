@@ -831,6 +831,36 @@ func TestParseStmt(t *testing.T) {
 				},
 			},
 		},
+		{
+			input: []token.Token{
+				newToken(token.REPEAT, "repeat"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.NAMED, ":="),
+				newToken(token.IDENT, "foo"),
+				newToken(token.PLUS, "+"),
+				newToken(token.NUMBER, "1"),
+				newToken(token.UNTIL, "until"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.LTEQL, "<="),
+				newToken(token.NUMBER, "10"),
+			},
+			wantStmt: &ast.WhileStmt{
+				Token: newToken(token.REPEAT, "repeat"),
+				Invariant: &ast.BinaryExpr{
+					Left:     newIdent("foo"),
+					Operator: newToken(token.LTEQL, "<="),
+					Right:    newNumber("10"),
+				},
+				Body: &ast.AssignmentStmt{
+					Identifier: newIdent("foo"),
+					Expr: &ast.BinaryExpr{
+						Left:     newIdent("foo"),
+						Operator: newToken(token.PLUS, "+"),
+						Right:    newNumber("1"),
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
