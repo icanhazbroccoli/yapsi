@@ -790,7 +790,7 @@ func TestParseStmt(t *testing.T) {
 			},
 			wantStmt: &ast.IfStmt{
 				Token: newToken(token.IF, "if"),
-				Expr: &ast.BinaryExpr{
+				Cond: &ast.BinaryExpr{
 					Left:     newIdent("foo"),
 					Operator: newToken(token.EQUAL, "="),
 					Right:    newIdent("bar"),

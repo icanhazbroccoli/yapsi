@@ -129,7 +129,7 @@ func (p *Parser) parseStmt() (ast.Statement, error) {
 		}
 		ifstmt := &ast.IfStmt{
 			Token: tok,
-			Expr:  expr,
+			Cond:  expr,
 			Then:  thenstmt,
 		}
 		if p.match(token.ELSE) {

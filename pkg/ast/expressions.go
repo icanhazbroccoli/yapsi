@@ -9,8 +9,10 @@ type IdentifierExpr struct {
 
 var _ Expression = (*IdentifierExpr)(nil)
 
-func (i *IdentifierExpr) expressionNode()                   {}
-func (i *IdentifierExpr) Visit(v NodeVisitor) VisitorResult { return v.VisitIdentifierExpr(i) }
+func (i *IdentifierExpr) expressionNode() {}
+func (i *IdentifierExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitIdentifierExpr(i)
+}
 
 type UnaryExpr struct {
 	Operator token.Token
@@ -19,8 +21,10 @@ type UnaryExpr struct {
 
 var _ Expression = (*UnaryExpr)(nil)
 
-func (u *UnaryExpr) expressionNode()                   {}
-func (u *UnaryExpr) Visit(v NodeVisitor) VisitorResult { return v.VisitUnaryExpr(u) }
+func (u *UnaryExpr) expressionNode() {}
+func (u *UnaryExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitUnaryExpr(u)
+}
 
 type BinaryExpr struct {
 	Left, Right Expression
@@ -29,8 +33,10 @@ type BinaryExpr struct {
 
 var _ Expression = (*BinaryExpr)(nil)
 
-func (b *BinaryExpr) expressionNode()                   {}
-func (b *BinaryExpr) Visit(v NodeVisitor) VisitorResult { return v.VisitBinaryExpr(b) }
+func (b *BinaryExpr) expressionNode() {}
+func (b *BinaryExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitBinaryExpr(b)
+}
 
 type ElementExpr struct {
 	Left, Right Expression
@@ -38,8 +44,10 @@ type ElementExpr struct {
 
 var _ Expression = (*ElementExpr)(nil)
 
-func (e *ElementExpr) expressionNode()                   {}
-func (e *ElementExpr) Visit(v NodeVisitor) VisitorResult { return v.VisitElementExpr(e) }
+func (e *ElementExpr) expressionNode() {}
+func (e *ElementExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitElementExpr(e)
+}
 
 type SetExpr struct {
 	Elements []Expression
@@ -47,5 +55,7 @@ type SetExpr struct {
 
 var _ Expression = (*SetExpr)(nil)
 
-func (s *SetExpr) expressionNode()                   {}
-func (s *SetExpr) Visit(v NodeVisitor) VisitorResult { return v.VisitSetExpr(s) }
+func (s *SetExpr) expressionNode() {}
+func (s *SetExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitSetExpr(s)
+}

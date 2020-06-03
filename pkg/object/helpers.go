@@ -7,8 +7,8 @@ import (
 	"yapsi/pkg/ast"
 )
 
-func parseInt(num ast.RawNumber) (int64, error) {
-	if !looksLikeInt(num) {
+func ParseInt(num ast.RawNumber) (int64, error) {
+	if !LooksLikeInt(num) {
 		return 0, fmt.Errorf("Unable to parse int value: %q", num)
 	}
 	v, err := strconv.Atoi(string(num))
@@ -18,7 +18,7 @@ func parseInt(num ast.RawNumber) (int64, error) {
 	return int64(v), nil
 }
 
-func looksLikeInt(num ast.RawNumber) bool {
+func LooksLikeInt(num ast.RawNumber) bool {
 	res := false
 	if len(num) > 0 {
 		for ix, ch := range num {
@@ -34,6 +34,20 @@ func looksLikeInt(num ast.RawNumber) bool {
 	return res
 }
 
-func parseReal(num ast.RawNumber) (float64, error) {
+func ParseReal(num ast.RawNumber) (float64, error) {
 	return strconv.ParseFloat(string(num), 64)
+}
+
+func IncompTypOpErr(o Any, opName string) error {
+	return fmt.Errorf("Operator %s is not defined on type: %v",
+		opName, o.Type())
+}
+
+func WrongOperandTypErr(o1, o2 Any, opName string) error {
+	return fmt.Errorf("Unsupported operator: %v %s %v",
+		o1.Type(), opName, o2.Type())
+}
+
+func UnsupTypOpErr(t Type, op string) error {
+	return fmt.Errorf("Unsupported operator for type: %v", t)
 }

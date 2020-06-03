@@ -1,7 +1,7 @@
 package ast
 
 type Node interface {
-	Visit(NodeVisitor) VisitorResult
+	Visit(NodeVisitor) (VisitorResult, error)
 }
 
 type Literal interface {
