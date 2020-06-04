@@ -1,6 +1,7 @@
 package object
 
 type Arithmetic interface {
+	Any
 	OpUnPlus() (Any, error)
 	OpUnMinus() (Any, error)
 	OpPlus(Any) (Any, error)
@@ -11,6 +12,7 @@ type Arithmetic interface {
 }
 
 type Comparable interface {
+	Any
 	OpEql(Any) (*Boolean, error)
 	OpNeql(Any) (*Boolean, error)
 	OpGt(Any) (*Boolean, error)
@@ -20,11 +22,18 @@ type Comparable interface {
 }
 
 type Logical interface {
+	Any
 	OpNot() (Any, error)
 	OpAnd(Any) (Any, error)
 	OpOr(Any) (Any, error)
 }
 
+type Indexable interface {
+	Any
+	OpSubscrGet(Arithmetic) (Any, error)
+	OpSubscrSet(Arithmetic, Any) error
+}
+
 type Any interface {
-	Type() Type
+	Type() *Type
 }

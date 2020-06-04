@@ -1,0 +1,39 @@
+package object
+
+import "fmt"
+
+func IncompTypOpErr(o Any, opName string) error {
+	return fmt.Errorf("Operator %s is not defined on type: %v",
+		opName, o.Type())
+}
+
+func WrongOperandTypErr(o1, o2 Any, opName string) error {
+	return fmt.Errorf("Unsupported operator: %v %s %v",
+		o1.Type(), opName, o2.Type())
+}
+
+func UnsupTypOpErr(t *Type, op string) error {
+	return fmt.Errorf("Unsupported operator for type: %v", t.Name())
+}
+
+func duplicateTypeDefErr(t *Type) error {
+	return fmt.Errorf("Type named %q has already been defined",
+		t.Name())
+}
+
+func arrIndexOutOfBounsErr(ix Arithmetic) error {
+	return fmt.Errorf("Array index %v is out of bounds", ix)
+}
+
+func arrWrongRangeConstraintErr(l, r Arithmetic) error {
+	return fmt.Errorf("Array range constraint is wrong: Left: %v, Right: %v", l, r)
+}
+
+func arrWrongIndexTypeErr(gotType, wantType *Type) error {
+	return fmt.Errorf("Wrong array indexing type provided: got: %s, want: %s",
+		gotType.Name(), wantType.Name())
+}
+
+func arrUnprocessableIndexTypeErr(t *Type) error {
+	return fmt.Errorf("Array indexing failed for index type: %s", t.Name())
+}

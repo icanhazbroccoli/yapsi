@@ -3,21 +3,23 @@ package interpreter
 import "yapsi/pkg/object"
 
 type Environment struct {
-	mappings map[string]object.Any
-	super    *Environment
+	types *object.TypeRegistry
+	vars  map[string]object.Any
+	super *Environment
 }
 
 func NewEnvironment(super *Environment) *Environment {
 	return &Environment{
-		mappings: make(map[string]object.Any),
-		super:    super,
+		types: object.NewTypeRegistry(),
+		vars:  make(map[string]object.Any),
+		super: super,
 	}
 }
 
 func (e *Environment) Lookup(ident string) (object.Any, bool) {
 	ptr := e
 	for ptr != nil {
-		lookup, ok := ptr.mappings[ident]
+		lookup, ok := ptr.vars[ident]
 		if ok {
 			return lookup, ok
 		}
@@ -27,5 +29,5 @@ func (e *Environment) Lookup(ident string) (object.Any, bool) {
 }
 
 func (e *Environment) Assign(ident string, value object.Any) {
-	e.mappings[ident] = value
+	e.vars[ident] = value
 }

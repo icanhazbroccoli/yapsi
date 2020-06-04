@@ -1,5 +1,9 @@
 package object
 
+var IntegerType *Type
+
+func init() { IntegerType = NewType(INT, nil, nil) }
+
 type Integer struct {
 	Value int64
 }
@@ -8,7 +12,7 @@ var _ Any = (*Integer)(nil)
 var _ Arithmetic = (*Integer)(nil)
 var _ Comparable = (*Integer)(nil)
 
-func (i *Integer) Type() Type { return INT }
+func (i *Integer) Type() *Type { return IntegerType }
 
 func (i *Integer) OpUnPlus() (Any, error) {
 	return i, nil

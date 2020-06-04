@@ -1,13 +1,17 @@
 package object
 
+var BoolType *Type
+
+func init() { BoolType = NewType(BOOL, nil, nil) }
+
 type Boolean struct {
 	Value bool
 }
 
-var _ (Any) = (*Boolean)(nil)
-var _ (Logical) = (*Boolean)(nil)
+var _ Any = (*Boolean)(nil)
+var _ Logical = (*Boolean)(nil)
 
-func (b *Boolean) Type() Type { return BOOL }
+func (b *Boolean) Type() *Type { return BoolType }
 
 func (b *Boolean) OpNot() (Any, error) {
 	return &Boolean{

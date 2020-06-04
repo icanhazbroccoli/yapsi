@@ -37,17 +37,3 @@ func LooksLikeInt(num ast.RawNumber) bool {
 func ParseReal(num ast.RawNumber) (float64, error) {
 	return strconv.ParseFloat(string(num), 64)
 }
-
-func IncompTypOpErr(o Any, opName string) error {
-	return fmt.Errorf("Operator %s is not defined on type: %v",
-		opName, o.Type())
-}
-
-func WrongOperandTypErr(o1, o2 Any, opName string) error {
-	return fmt.Errorf("Unsupported operator: %v %s %v",
-		o1.Type(), opName, o2.Type())
-}
-
-func UnsupTypOpErr(t Type, op string) error {
-	return fmt.Errorf("Unsupported operator for type: %v", t)
-}
