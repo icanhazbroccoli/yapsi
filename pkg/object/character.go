@@ -1,18 +1,15 @@
 package object
 
-var CharacterType *Type
-
-func init() { CharacterType = NewType(CHAR, nil, nil) }
+import "yapsi/pkg/types"
 
 type Character struct {
 	Value rune
 }
 
-var _ (Any) = (*Character)(nil)
 var _ (Arithmetic) = (*Character)(nil)
 var _ (Comparable) = (*Character)(nil)
 
-func (c *Character) Type() *Type { return CharacterType }
+func (c *Character) Type() *types.Type { return types.Char }
 
 func (c *Character) OpUnPlus() (Any, error) {
 	return c, nil

@@ -1,8 +1,10 @@
 package interpreter
 
 import (
+	"fmt"
 	"yapsi/pkg/ast"
 	"yapsi/pkg/object"
+	"yapsi/pkg/types"
 )
 
 type Interpreter struct {
@@ -12,6 +14,9 @@ type Interpreter struct {
 var _ ast.NodeVisitor = (*Interpreter)(nil)
 
 func (i *Interpreter) Evaluate(p *ast.ProgramStmt) error {
+	env := NewEnvironment(nil)
+	registerBaseTypes(env)
+	i.env = env
 	_, err := p.Visit(i)
 	return err
 }
@@ -54,7 +59,7 @@ func (i *Interpreter) VisitCharLiteral(node *ast.CharLiteral) (ast.VisitorResult
 }
 
 func (i *Interpreter) VisitIdentifierExpr(node *ast.IdentifierExpr) (ast.VisitorResult, error) {
-	lookup, ok := i.env.Lookup(node.Value)
+	lookup, ok := i.env.LookupVar(object.VarName(node.Value))
 	if !ok {
 		return nil, undefinedIdentErr(node.Value)
 	}
@@ -91,6 +96,12 @@ func (i *Interpreter) VisitBinaryExpr(node *ast.BinaryExpr) (ast.VisitorResult, 
 	right, err := node.Right.Visit(i)
 	if err != nil {
 		return nil, err
+	}
+	if val, ok := left.(*object.Variable); ok {
+		left = val.Value()
+	}
+	if val, ok := right.(*object.Variable); ok {
+		right = val.Value()
 	}
 	switch node.Operator.Literal {
 	case "+":
@@ -146,7 +157,7 @@ func (i *Interpreter) VisitBinaryExpr(node *ast.BinaryExpr) (ast.VisitorResult, 
 			return lg.OpOr(right.(object.Any))
 		}
 	}
-	return nil, unsupportedUnaryOpErr(node.Operator.Literal)
+	return nil, unsupportedBinaryOpErr(node.Operator.Literal)
 }
 
 func (i *Interpreter) VisitElementExpr(*ast.ElementExpr) (ast.VisitorResult, error) {
@@ -164,6 +175,9 @@ func (i *Interpreter) VisitProgramStmt(node *ast.ProgramStmt) (ast.VisitorResult
 }
 
 func (i *Interpreter) VisitBlockStmt(node *ast.BlockStmt) (ast.VisitorResult, error) {
+	if _, err := node.VarDecl.Visit(i); err != nil {
+		return nil, err
+	}
 	return node.Statement.Visit(i)
 }
 
@@ -194,7 +208,9 @@ func (i *Interpreter) VisitAssignmentStmt(node *ast.AssignmentStmt) (ast.Visitor
 	if !ok {
 		return nil, unexpectedVisitorResultTypeErr(r, "object.Any")
 	}
-	i.env.Assign(variable.Name(), value)
+	if err := i.env.AssignVar(variable.Name(), value); err != nil {
+		return nil, err
+	}
 	return nil, nil
 }
 
@@ -270,4 +286,25 @@ func (i *Interpreter) VisitRepeatStmt(node *ast.RepeatStmt) (ast.VisitorResult, 
 		}
 	}
 	return nil, nil
+}
+
+func (i *Interpreter) VisitVarDeclStmt(node *ast.VarDeclStmt) (ast.VisitorResult, error) {
+	for ident, typ := range node.Declarations {
+		t, ok := i.env.LookupType(types.TypeName(typ))
+		if !ok {
+			return nil, fmt.Errorf("Undeclared type: %s", typ)
+		}
+		if err := i.env.DeclareVar(object.VarName(ident), t); err != nil {
+			return nil, err
+		}
+	}
+	return nil, nil
+}
+
+func registerBaseTypes(env *Environment) {
+	env.DeclareType(types.BOOL, types.Bool)
+	env.DeclareType(types.INT, types.Int)
+	env.DeclareType(types.REAL, types.Real)
+	env.DeclareType(types.CHAR, types.Char)
+	env.DeclareType(types.STRING, types.String)
 }

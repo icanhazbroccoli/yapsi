@@ -1,5 +1,9 @@
 program HelloWorld;
 
+var
+    i : integer;
+    foo : real
+
 begin
 
     i := 0;

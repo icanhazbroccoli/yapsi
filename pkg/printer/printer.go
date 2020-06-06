@@ -3,6 +3,7 @@ package printer
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
 
 	"yapsi/pkg/ast"
@@ -157,7 +158,40 @@ func (p *AstPrinter) VisitProgramStmt(node *ast.ProgramStmt) (ast.VisitorResult,
 
 func (p *AstPrinter) VisitBlockStmt(node *ast.BlockStmt) (ast.VisitorResult, error) {
 	var out bytes.Buffer
+	if node.VarDecl != nil {
+		decl, err := node.VarDecl.Visit(p)
+		if err != nil {
+			return nil, err
+		}
+
+		out.WriteString(decl.(string) + "\n\n")
+	}
 	res, _ := node.Statement.Visit(p)
 	out.WriteString(res.(string))
+	return out.String(), nil
+}
+
+func (p *AstPrinter) VisitVarDeclStmt(node *ast.VarDeclStmt) (ast.VisitorResult, error) {
+	var out bytes.Buffer
+	mappings := make(map[string][]string)
+	for ident, typ := range node.Declarations {
+		if _, ok := mappings[typ]; !ok {
+			mappings[typ] = make([]string, 0, 1)
+		}
+		mappings[typ] = append(mappings[typ], ident)
+	}
+	types := make([]string, 0, len(mappings))
+	for typ := range mappings {
+		types = append(types, typ)
+		sort.Strings(mappings[typ])
+	}
+	sort.Strings(types)
+	out.WriteString("var\n")
+	chunks := make([]string, 0, len(types))
+	for _, typ := range types {
+		chunks = append(chunks,
+			strings.Join(mappings[typ], ", ")+" : "+typ)
+	}
+	out.WriteString(strings.Join(chunks, ";\n"))
 	return out.String(), nil
 }

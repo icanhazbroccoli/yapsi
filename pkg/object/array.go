@@ -1,31 +1,23 @@
 package object
 
-type ArrayTypeDefinition struct {
-	IndexType     *Type
-	ComponentType *Type
-	Left, Right   Arithmetic
-}
-
-var _ TypeDefinition = (*ArrayTypeDefinition)(nil)
+import "yapsi/pkg/types"
 
 type Array struct {
-	typ    *Type
-	values []Any
+	left, right Arithmetic
+	it, ct      *types.Type
+	values      []Any
 }
 
 var _ Indexable = (*Array)(nil)
 
-func (a *Array) Type() *Type { return a.typ }
+func (a *Array) Type() *types.Type { return types.Array }
 
-func NewArray(l, r Arithmetic, it *Type, ct *Type) (*Array, error) {
-	def := &ArrayTypeDefinition{
-		IndexType:     it,
-		ComponentType: ct,
-		Left:          l,
-		Right:         r,
-	}
+func NewArray(l, r Arithmetic, it, ct *types.Type) (*Array, error) {
 	a := &Array{
-		typ: NewType(ARRAY, def, nil),
+		left:  l,
+		right: r,
+		it:    it,
+		ct:    ct,
 	}
 	i0, err := a.convIdx(l)
 	if err != nil {
@@ -67,11 +59,10 @@ func (a *Array) OpSubscrSet(ix Arithmetic, v Any) error {
 }
 
 func (a *Array) convIdx(ix Arithmetic) (int, error) {
-	def := a.typ.def.(*ArrayTypeDefinition)
-	if ix.Type() != def.IndexType {
-		return -1, arrWrongIndexTypeErr(ix.Type(), def.IndexType)
+	if ix.Type() != a.it {
+		return -1, arrWrongIndexTypeErr(ix.Type(), a.it)
 	}
-	diff, err := ix.OpMinus(def.Left)
+	diff, err := ix.OpMinus(a.left)
 	if err != nil {
 		return -1, err
 	}

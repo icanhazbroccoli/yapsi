@@ -1,18 +1,15 @@
 package object
 
-var RealType *Type
-
-func init() { RealType = NewType(REAL, nil, nil) }
+import "yapsi/pkg/types"
 
 type Real struct {
 	Value float64
 }
 
-var _ Any = (*Real)(nil)
 var _ Arithmetic = (*Real)(nil)
 var _ Comparable = (*Real)(nil)
 
-func (r *Real) Type() *Type { return RealType }
+func (r *Real) Type() *types.Type { return types.Real }
 
 func (r *Real) OpUnPlus() (Any, error) { return r, nil }
 

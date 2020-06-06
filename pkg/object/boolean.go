@@ -1,17 +1,14 @@
 package object
 
-var BoolType *Type
-
-func init() { BoolType = NewType(BOOL, nil, nil) }
+import "yapsi/pkg/types"
 
 type Boolean struct {
 	Value bool
 }
 
-var _ Any = (*Boolean)(nil)
 var _ Logical = (*Boolean)(nil)
 
-func (b *Boolean) Type() *Type { return BoolType }
+func (b *Boolean) Type() *types.Type { return types.Bool }
 
 func (b *Boolean) OpNot() (Any, error) {
 	return &Boolean{

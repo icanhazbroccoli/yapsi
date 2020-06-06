@@ -1,5 +1,11 @@
 package object
 
+import "yapsi/pkg/types"
+
+type Any interface {
+	Type() *types.Type
+}
+
 type Arithmetic interface {
 	Any
 	OpUnPlus() (Any, error)
@@ -32,8 +38,4 @@ type Indexable interface {
 	Any
 	OpSubscrGet(Arithmetic) (Any, error)
 	OpSubscrSet(Arithmetic, Any) error
-}
-
-type Any interface {
-	Type() *Type
 }

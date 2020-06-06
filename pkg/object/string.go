@@ -1,8 +1,6 @@
 package object
 
-var StringType *Type
-
-func init() { StringType = NewType(STRING, nil, nil) }
+import "yapsi/pkg/types"
 
 type String struct {
 	Value string
@@ -12,7 +10,7 @@ var _ Any = (*String)(nil)
 var _ Arithmetic = (*String)(nil)
 var _ Comparable = (*String)(nil)
 
-func (s *String) Type() *Type { return StringType }
+func (s *String) Type() *types.Type { return types.String }
 
 func (s *String) OpPlus(o Any) (Any, error) {
 	switch s2 := o.(type) {

@@ -117,6 +117,7 @@ func (s *ProgramStmt) Visit(v NodeVisitor) (VisitorResult, error) {
 
 type BlockStmt struct {
 	Token     token.Token
+	VarDecl   *VarDeclStmt
 	Statement *CompoundStmt
 }
 
@@ -125,4 +126,14 @@ var _ Statement = (*BlockStmt)(nil)
 func (s *BlockStmt) statementNode() {}
 func (s *BlockStmt) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitBlockStmt(s)
+}
+
+type VarDeclStmt struct {
+	Token        token.Token
+	Declarations map[string]string
+}
+
+func (s *VarDeclStmt) statementNode() {}
+func (s *VarDeclStmt) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitVarDeclStmt(s)
 }

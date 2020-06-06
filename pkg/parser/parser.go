@@ -58,13 +58,59 @@ func (p *Parser) ParseProgram() (*ast.ProgramStmt, error) {
 
 func (p *Parser) parseBlock() (*ast.BlockStmt, error) {
 	tok := p.previous() // FIXME
+	declStmt, err := p.parseVarDeclStmt()
+	if err != nil {
+		return nil, err
+	}
 	stmt, err := p.parseCompoundStmt()
 	if err != nil {
 		return nil, err
 	}
 	return &ast.BlockStmt{
 		Token:     tok,
+		VarDecl:   declStmt,
 		Statement: stmt,
+	}, nil
+}
+
+func (p *Parser) parseVarDeclStmt() (*ast.VarDeclStmt, error) {
+	if !p.match(token.VAR) {
+		return nil, nil
+	}
+	tok := p.previous()
+	mappings := make(map[string]string)
+	for {
+		idents := []string{}
+		for {
+			ident, err := p.consume(token.IDENT)
+			if err != nil {
+				return nil, err
+			}
+			idents = append(idents, ident.Literal)
+			if p.match(token.COLON) {
+				break
+			}
+			if _, err := p.consume(token.COMMA); err != nil {
+				return nil, err
+			}
+		}
+		typ, err := p.consume(token.IDENT)
+		if err != nil {
+			return nil, err
+		}
+		for _, ident := range idents {
+			if _, ok := mappings[ident]; ok {
+				return nil, fmt.Errorf("Duplicate variable declaration: %s", ident)
+			}
+			mappings[ident] = typ.Literal
+		}
+		if !p.match(token.SEMICOLON) {
+			break
+		}
+	}
+	return &ast.VarDeclStmt{
+		Token:        tok,
+		Declarations: mappings,
 	}, nil
 }
 

@@ -24,4 +24,5 @@ type NodeVisitor interface {
 	VisitIfStmt(*IfStmt) (VisitorResult, error)
 	VisitWhileStmt(*WhileStmt) (VisitorResult, error)
 	VisitRepeatStmt(*RepeatStmt) (VisitorResult, error)
+	VisitVarDeclStmt(*VarDeclStmt) (VisitorResult, error)
 }

@@ -13,6 +13,10 @@ func unsupportedUnaryOpErr(op string) error {
 	return fmt.Errorf("Unsupported operator: %q", op)
 }
 
+func unsupportedBinaryOpErr(op string) error {
+	return fmt.Errorf("Unsupported operator: %q", op)
+}
+
 func undefinedIdentErr(ident string) error {
 	return fmt.Errorf("Variable %q is not defined", ident)
 }
