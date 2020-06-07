@@ -11,6 +11,8 @@ var _ (Comparable) = (*Character)(nil)
 
 func (c *Character) Type() *types.Type { return types.Char }
 
+func (c *Character) String() string { return string([]rune{c.Value}) }
+
 func (c *Character) OpUnPlus() (Any, error) {
 	return c, nil
 }

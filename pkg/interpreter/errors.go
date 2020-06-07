@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"yapsi/pkg/types"
 )
 
 func unexpectedVisitorResultTypeErr(v interface{}, wantType string) error {
@@ -13,12 +14,17 @@ func unsupportedUnaryOpErr(op string) error {
 	return fmt.Errorf("Unsupported operator: %q", op)
 }
 
-func unsupportedBinaryOpErr(op string) error {
-	return fmt.Errorf("Unsupported operator: %q", op)
+func unsupportedBinaryOpErr(op string, t1, t2 *types.Type) error {
+	return fmt.Errorf("Unsupported operator: %s %s %s",
+		t1.Name(), op, t2.Name())
 }
 
 func undefinedIdentErr(ident string) error {
 	return fmt.Errorf("Variable %q is not defined", ident)
+}
+
+func uncallableEntityErr(ident string) error {
+	return fmt.Errorf("Variable %q is not callable", ident)
 }
 
 func wrongIfCondTypErr(cond interface{}) error {

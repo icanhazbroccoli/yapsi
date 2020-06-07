@@ -1,6 +1,10 @@
 package object
 
-import "yapsi/pkg/types"
+import (
+	"fmt"
+
+	"yapsi/pkg/types"
+)
 
 type Boolean struct {
 	Value bool
@@ -9,6 +13,10 @@ type Boolean struct {
 var _ Logical = (*Boolean)(nil)
 
 func (b *Boolean) Type() *types.Type { return types.Bool }
+
+func (b *Boolean) String() string {
+	return fmt.Sprintf("%t", b.Value)
+}
 
 func (b *Boolean) OpNot() (Any, error) {
 	return &Boolean{

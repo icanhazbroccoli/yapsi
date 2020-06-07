@@ -1,6 +1,10 @@
 package object
 
-import "yapsi/pkg/types"
+import (
+	"strings"
+
+	"yapsi/pkg/types"
+)
 
 type Array struct {
 	left, right Arithmetic
@@ -11,6 +15,14 @@ type Array struct {
 var _ Indexable = (*Array)(nil)
 
 func (a *Array) Type() *types.Type { return types.Array }
+
+func (a *Array) String() string {
+	chunks := make([]string, 0, len(a.values))
+	for _, v := range a.values {
+		chunks = append(chunks, v.String())
+	}
+	return "[" + strings.Join(chunks, ", ") + "]"
+}
 
 func NewArray(l, r Arithmetic, it, ct *types.Type) (*Array, error) {
 	a := &Array{

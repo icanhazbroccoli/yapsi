@@ -4,6 +4,7 @@ import "yapsi/pkg/types"
 
 type Any interface {
 	Type() *types.Type
+	String() string
 }
 
 type Arithmetic interface {
@@ -25,6 +26,15 @@ type Comparable interface {
 	OpGte(Any) (*Boolean, error)
 	OpLt(Any) (*Boolean, error)
 	OpLte(Any) (*Boolean, error)
+}
+
+type Callable interface {
+	Any
+	Arity() int
+	IsVariadic() bool
+	Returns() *types.Type
+	Call(*Environment, ...Any) error
+	CallReturn(*Environment, ...Any) (Any, error)
 }
 
 type Logical interface {

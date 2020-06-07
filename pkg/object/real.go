@@ -1,6 +1,10 @@
 package object
 
-import "yapsi/pkg/types"
+import (
+	"fmt"
+
+	"yapsi/pkg/types"
+)
 
 type Real struct {
 	Value float64
@@ -10,6 +14,7 @@ var _ Arithmetic = (*Real)(nil)
 var _ Comparable = (*Real)(nil)
 
 func (r *Real) Type() *types.Type { return types.Real }
+func (r *Real) String() string    { return fmt.Sprintf("%f", r.Value) }
 
 func (r *Real) OpUnPlus() (Any, error) { return r, nil }
 

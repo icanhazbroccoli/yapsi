@@ -1,21 +1,20 @@
-package interpreter
+package object
 
 import (
 	"fmt"
-	"yapsi/pkg/object"
 	"yapsi/pkg/types"
 )
 
 type Environment struct {
 	types *types.Registry
-	vars  map[object.VarName]*object.Variable
+	vars  map[VarName]*Variable
 	super *Environment
 }
 
 func NewEnvironment(super *Environment) *Environment {
 	return &Environment{
 		types: types.NewRegistry(),
-		vars:  make(map[object.VarName]*object.Variable),
+		vars:  make(map[VarName]*Variable),
 		super: super,
 	}
 }
@@ -38,26 +37,26 @@ func (e *Environment) DeclareType(name types.TypeName, t *types.Type) error {
 	return nil
 }
 
-func (e *Environment) LookupVar(name object.VarName) (object.Any, bool) {
+func (e *Environment) LookupVar(name VarName) (Any, bool) {
 	ptr := e
 	for ptr != nil {
 		if lookup, ok := ptr.vars[name]; ok {
-			return lookup, ok
+			return lookup.Any, ok
 		}
 		ptr = ptr.super
 	}
 	return nil, false
 }
 
-func (e *Environment) DeclareVar(name object.VarName, t *types.Type) error {
+func (e *Environment) DeclareVar(name VarName, t *types.Type) error {
 	if _, ok := e.vars[name]; ok {
 		return fmt.Errorf("Duplicate variable declaration: %s", name)
 	}
-	e.vars[name] = object.NewVariable(name, t, nil)
+	e.vars[name] = NewVariable(name, t, nil)
 	return nil
 }
 
-func (e *Environment) AssignVar(name object.VarName, value object.Any) error {
+func (e *Environment) AssignVar(name VarName, value Any) error {
 	if _, ok := e.vars[name]; !ok {
 		return fmt.Errorf("Undefined variable: %s", name)
 	}
@@ -65,4 +64,11 @@ func (e *Environment) AssignVar(name object.VarName, value object.Any) error {
 		return err
 	}
 	return nil
+}
+
+func (e *Environment) DeclareAssignVar(name VarName, value Any) error {
+	if err := e.DeclareVar(name, value.Type()); err != nil {
+		return err
+	}
+	return e.AssignVar(name, value)
 }

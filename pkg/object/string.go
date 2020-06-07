@@ -11,6 +11,7 @@ var _ Arithmetic = (*String)(nil)
 var _ Comparable = (*String)(nil)
 
 func (s *String) Type() *types.Type { return types.String }
+func (s *String) String() string    { return "'" + s.Value + "'" }
 
 func (s *String) OpPlus(o Any) (Any, error) {
 	switch s2 := o.(type) {

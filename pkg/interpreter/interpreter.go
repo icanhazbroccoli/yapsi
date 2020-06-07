@@ -3,19 +3,21 @@ package interpreter
 import (
 	"fmt"
 	"yapsi/pkg/ast"
+	"yapsi/pkg/builtin"
 	"yapsi/pkg/object"
 	"yapsi/pkg/types"
 )
 
 type Interpreter struct {
-	env *Environment
+	env *object.Environment
 }
 
 var _ ast.NodeVisitor = (*Interpreter)(nil)
 
 func (i *Interpreter) Evaluate(p *ast.ProgramStmt) error {
-	env := NewEnvironment(nil)
-	registerBaseTypes(env)
+	env := object.NewEnvironment(nil)
+	declareBaseTypes(env)
+	declareBuiltins(env)
 	i.env = env
 	_, err := p.Visit(i)
 	return err
@@ -89,20 +91,15 @@ func (i *Interpreter) VisitUnaryExpr(node *ast.UnaryExpr) (ast.VisitorResult, er
 }
 
 func (i *Interpreter) VisitBinaryExpr(node *ast.BinaryExpr) (ast.VisitorResult, error) {
-	left, err := node.Left.Visit(i)
+	lr, err := node.Left.Visit(i)
 	if err != nil {
 		return nil, err
 	}
-	right, err := node.Right.Visit(i)
+	rr, err := node.Right.Visit(i)
 	if err != nil {
 		return nil, err
 	}
-	if val, ok := left.(*object.Variable); ok {
-		left = val.Value()
-	}
-	if val, ok := right.(*object.Variable); ok {
-		right = val.Value()
-	}
+	left, right := lr.(object.Any), rr.(object.Any)
 	switch node.Operator.Literal {
 	case "+":
 		if ar, ok := left.(object.Arithmetic); ok {
@@ -157,7 +154,7 @@ func (i *Interpreter) VisitBinaryExpr(node *ast.BinaryExpr) (ast.VisitorResult, 
 			return lg.OpOr(right.(object.Any))
 		}
 	}
-	return nil, unsupportedBinaryOpErr(node.Operator.Literal)
+	return nil, unsupportedBinaryOpErr(node.Operator.Literal, left.Type(), right.Type())
 }
 
 func (i *Interpreter) VisitElementExpr(*ast.ElementExpr) (ast.VisitorResult, error) {
@@ -192,14 +189,7 @@ func (i *Interpreter) VisitCompoundStmt(node *ast.CompoundStmt) (ast.VisitorResu
 }
 
 func (i *Interpreter) VisitAssignmentStmt(node *ast.AssignmentStmt) (ast.VisitorResult, error) {
-	v, err := node.Identifier.Visit(i)
-	if err != nil {
-		return nil, err
-	}
-	variable, ok := v.(*object.Variable)
-	if !ok {
-		return nil, unexpectedVisitorResultTypeErr(v, "*object.Variable")
-	}
+	ident := node.Identifier.Value
 	r, err := node.Expr.Visit(i)
 	if err != nil {
 		return nil, err
@@ -208,7 +198,7 @@ func (i *Interpreter) VisitAssignmentStmt(node *ast.AssignmentStmt) (ast.Visitor
 	if !ok {
 		return nil, unexpectedVisitorResultTypeErr(r, "object.Any")
 	}
-	if err := i.env.AssignVar(variable.Name(), value); err != nil {
+	if err := i.env.AssignVar(object.VarName(ident), value); err != nil {
 		return nil, err
 	}
 	return nil, nil
@@ -224,9 +214,31 @@ func (i *Interpreter) VisitLabeledStmt(node *ast.LabeledStmt) (ast.VisitorResult
 	return node.Stmt.Visit(i)
 }
 
-func (i *Interpreter) VisitCallStmt(*ast.CallStmt) (ast.VisitorResult, error) {
-	//TODO
-	panic("not implemented")
+func (i *Interpreter) VisitCallStmt(node *ast.CallStmt) (ast.VisitorResult, error) {
+	ident := node.Identifier.Value
+	lr, ok := i.env.LookupVar(object.VarName(ident))
+	if !ok {
+		return nil, undefinedIdentErr(ident)
+	}
+	callable, ok := lr.(object.Callable)
+	if !ok {
+		return nil, uncallableEntityErr(ident)
+	}
+	args := make([]object.Any, 0, len(node.Args))
+	for _, arg := range node.Args {
+		ar, err := arg.Visit(i)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, ar.(object.Any))
+	}
+	if callable.Returns() != nil {
+		//function
+		return callable.CallReturn(i.env, args...)
+	}
+	//procedure
+	err := callable.Call(i.env, args...)
+	return nil, err
 }
 
 func (i *Interpreter) VisitIfStmt(node *ast.IfStmt) (ast.VisitorResult, error) {
@@ -301,10 +313,14 @@ func (i *Interpreter) VisitVarDeclStmt(node *ast.VarDeclStmt) (ast.VisitorResult
 	return nil, nil
 }
 
-func registerBaseTypes(env *Environment) {
+func declareBaseTypes(env *object.Environment) {
 	env.DeclareType(types.BOOL, types.Bool)
 	env.DeclareType(types.INT, types.Int)
 	env.DeclareType(types.REAL, types.Real)
 	env.DeclareType(types.CHAR, types.Char)
 	env.DeclareType(types.STRING, types.String)
+}
+
+func declareBuiltins(env *object.Environment) {
+	env.DeclareAssignVar(object.VarName("writeln"), builtin.WriteLn)
 }
