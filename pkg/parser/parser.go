@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+
 	"unicode/utf8"
 	"yapsi/pkg/ast"
 	"yapsi/pkg/lexer"
@@ -277,7 +278,7 @@ func (p *Parser) parseSimpleStmt() (ast.Statement, error) {
 			}, nil
 		}
 		args := []ast.Expression{}
-		// procedure or function call
+		// procedure call
 		if p.match(token.LPAREN) {
 			for {
 				expr, err := p.parseExpression()
@@ -293,7 +294,7 @@ func (p *Parser) parseSimpleStmt() (ast.Statement, error) {
 				return nil, err
 			}
 		}
-		return &ast.CallStmt{
+		return &ast.ProcedureStmt{
 			Identifier: &ast.IdentifierExpr{
 				Token: ident,
 				Value: ident.Literal,
@@ -320,10 +321,33 @@ func (p *Parser) parseSimpleStmt() (ast.Statement, error) {
 //				<function designator> | <set> | not <factor>
 func (p *Parser) parseFactor() (ast.Expression, error) {
 	if p.match(token.IDENT) {
-		return &ast.IdentifierExpr{
+		ident := &ast.IdentifierExpr{
 			Token: p.previous(),
 			Value: p.previous().Literal,
-		}, nil
+		}
+		if p.match(token.LPAREN) {
+			// function call
+			args := []ast.Expression{}
+			for {
+				expr, err := p.parseExpression()
+				if err != nil {
+					return nil, err
+				}
+				args = append(args, expr)
+				if !p.match(token.COMMA) {
+					break
+				}
+			}
+			if _, err := p.consume(token.RPAREN); err != nil {
+				return nil, err
+			}
+			return &ast.FunctionExpr{
+				Token:      ident.Token,
+				Identifier: ident,
+				Args:       args,
+			}, nil
+		}
+		return ident, nil
 	}
 	if p.match(token.NUMBER) {
 		return &ast.NumericLiteral{

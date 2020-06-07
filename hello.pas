@@ -1,22 +1,16 @@
 program HelloWorld;
 
 var
-    i : integer;
-    foo : real
+    i : integer
 
 begin
 
-    (*
-    foo := -12.345;
+    i := 0;
 
     while i < 10 do
     begin
-        writeln('Hello World!');
+        writeln('iteration', i, ':', 'Hello World!');
         i := i + 1
     end
-    *)
-    i := 0;
-    i := i + 1;
-    writeln(i)
 
 end.

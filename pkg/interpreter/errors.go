@@ -23,6 +23,10 @@ func undefinedIdentErr(ident string) error {
 	return fmt.Errorf("Variable %q is not defined", ident)
 }
 
+func uninitializedIdentErr(ident string) error {
+	return fmt.Errorf("Variable %q is not initialized", ident)
+}
+
 func uncallableEntityErr(ident string) error {
 	return fmt.Errorf("Variable %q is not callable", ident)
 }

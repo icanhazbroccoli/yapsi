@@ -59,3 +59,16 @@ func (s *SetExpr) expressionNode() {}
 func (s *SetExpr) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitSetExpr(s)
 }
+
+type FunctionExpr struct {
+	Token      token.Token
+	Identifier *IdentifierExpr
+	Args       []Expression
+}
+
+var _ Expression = (*FunctionExpr)(nil)
+
+func (f *FunctionExpr) expressionNode() {}
+func (f *FunctionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitFunctionExpr(f)
+}

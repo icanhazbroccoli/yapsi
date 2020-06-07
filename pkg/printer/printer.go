@@ -80,7 +80,24 @@ func (p *AstPrinter) VisitLabeledStmt(node *ast.LabeledStmt) (ast.VisitorResult,
 	return label.(string) + " : " + stmt.(string), nil
 }
 
-func (p *AstPrinter) VisitCallStmt(node *ast.CallStmt) (ast.VisitorResult, error) {
+func (p *AstPrinter) VisitProcedureStmt(node *ast.ProcedureStmt) (ast.VisitorResult, error) {
+	var out bytes.Buffer
+	ident, _ := node.Identifier.Visit(p)
+	out.WriteString(ident.(string))
+	if len(node.Args) > 0 {
+		out.WriteRune('(')
+		args := make([]string, 0, len(node.Args))
+		for _, arg := range node.Args {
+			s, _ := arg.Visit(p)
+			args = append(args, s.(string))
+		}
+		out.WriteString(strings.Join(args, ", "))
+		out.WriteRune(')')
+	}
+	return out.String(), nil
+}
+
+func (p *AstPrinter) VisitFunctionExpr(node *ast.FunctionExpr) (ast.VisitorResult, error) {
 	var out bytes.Buffer
 	ident, _ := node.Identifier.Visit(p)
 	out.WriteString(ident.(string))

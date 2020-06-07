@@ -38,16 +38,16 @@ func (s *LabeledStmt) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitLabeledStmt(s)
 }
 
-type CallStmt struct {
+type ProcedureStmt struct {
 	Identifier *IdentifierExpr
 	Args       []Expression
 }
 
-var _ (Statement) = (*CallStmt)(nil)
+var _ (Statement) = (*ProcedureStmt)(nil)
 
-func (s *CallStmt) statementNode() {}
-func (s *CallStmt) Visit(v NodeVisitor) (VisitorResult, error) {
-	return v.VisitCallStmt(s)
+func (s *ProcedureStmt) statementNode() {}
+func (s *ProcedureStmt) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitProcedureStmt(s)
 }
 
 type CompoundStmt struct {

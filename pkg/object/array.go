@@ -15,6 +15,7 @@ type Array struct {
 var _ Indexable = (*Array)(nil)
 
 func (a *Array) Type() *types.Type { return types.Array }
+func (a *Array) Len() int          { return len(a.values) }
 
 func (a *Array) String() string {
 	chunks := make([]string, 0, len(a.values))

@@ -65,6 +65,9 @@ func (i *Interpreter) VisitIdentifierExpr(node *ast.IdentifierExpr) (ast.Visitor
 	if !ok {
 		return nil, undefinedIdentErr(node.Value)
 	}
+	if lookup == nil {
+		return nil, uninitializedIdentErr(node.Value)
+	}
 	return lookup, nil
 }
 
@@ -214,7 +217,7 @@ func (i *Interpreter) VisitLabeledStmt(node *ast.LabeledStmt) (ast.VisitorResult
 	return node.Stmt.Visit(i)
 }
 
-func (i *Interpreter) VisitCallStmt(node *ast.CallStmt) (ast.VisitorResult, error) {
+func (i *Interpreter) VisitProcedureStmt(node *ast.ProcedureStmt) (ast.VisitorResult, error) {
 	ident := node.Identifier.Value
 	lr, ok := i.env.LookupVar(object.VarName(ident))
 	if !ok {
@@ -239,6 +242,27 @@ func (i *Interpreter) VisitCallStmt(node *ast.CallStmt) (ast.VisitorResult, erro
 	//procedure
 	err := callable.Call(i.env, args...)
 	return nil, err
+}
+
+func (i *Interpreter) VisitFunctionExpr(node *ast.FunctionExpr) (ast.VisitorResult, error) {
+	ident := node.Identifier.Value
+	lr, ok := i.env.LookupVar(object.VarName(ident))
+	if !ok {
+		return nil, undefinedIdentErr(ident)
+	}
+	callable, ok := lr.(object.Callable)
+	if !ok {
+		return nil, uncallableEntityErr(ident)
+	}
+	args := make([]object.Any, 0, len(node.Args))
+	for _, arg := range node.Args {
+		ar, err := arg.Visit(i)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, ar.(object.Any))
+	}
+	return callable.CallReturn(i.env, args...)
 }
 
 func (i *Interpreter) VisitIfStmt(node *ast.IfStmt) (ast.VisitorResult, error) {
@@ -271,7 +295,7 @@ func (i *Interpreter) VisitWhileStmt(node *ast.WhileStmt) (ast.VisitorResult, er
 		if !b.Value {
 			break
 		}
-		if _, err := node.Visit(i); err != nil {
+		if _, err := node.Body.Visit(i); err != nil {
 			return nil, err
 		}
 	}
@@ -323,4 +347,5 @@ func declareBaseTypes(env *object.Environment) {
 
 func declareBuiltins(env *object.Environment) {
 	env.DeclareAssignVar(object.VarName("writeln"), builtin.WriteLn)
+	env.DeclareAssignVar(object.VarName("len"), builtin.Len)
 }

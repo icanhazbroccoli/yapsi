@@ -684,7 +684,7 @@ func TestParseSimpleStmt(t *testing.T) {
 			input: []token.Token{
 				newToken(token.IDENT, "foo"),
 			},
-			wantStmt: &ast.CallStmt{
+			wantStmt: &ast.ProcedureStmt{
 				Identifier: newIdent("foo"),
 				Args:       []ast.Expression{},
 			},
@@ -702,7 +702,7 @@ func TestParseSimpleStmt(t *testing.T) {
 				newToken(token.IDENT, "bar"),
 				newToken(token.RPAREN, ")"),
 			},
-			wantStmt: &ast.CallStmt{
+			wantStmt: &ast.ProcedureStmt{
 				Identifier: newIdent("foo"),
 				Args: []ast.Expression{
 					newNumber("42"),
@@ -764,7 +764,7 @@ func TestParseStmt(t *testing.T) {
 							Right:    newNumber("2"),
 						},
 					},
-					&ast.CallStmt{
+					&ast.ProcedureStmt{
 						Identifier: newIdent("bar"),
 						Args: []ast.Expression{
 							newNumber("42"),
@@ -865,7 +865,7 @@ func TestParseStmt(t *testing.T) {
 							Right:    newNumber("1"),
 						},
 					},
-					&ast.CallStmt{
+					&ast.ProcedureStmt{
 						Identifier: newIdent("writeln"),
 						Args: []ast.Expression{
 							newString("hello world"),

@@ -46,6 +46,7 @@ type Logical interface {
 
 type Indexable interface {
 	Any
+	Len() int
 	OpSubscrGet(Arithmetic) (Any, error)
 	OpSubscrSet(Arithmetic, Any) error
 }

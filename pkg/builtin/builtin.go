@@ -23,7 +23,33 @@ var WriteLn *object.Function = object.NewFunction(
 		for _, arg := range args {
 			chunks = append(chunks, arg.String())
 		}
-		fmt.Println(strings.Join(chunks, " "))
-		return nil, nil
+		bs, _ := fmt.Println(strings.Join(chunks, " "))
+		return &object.Integer{Value: int64(bs)}, nil
+	},
+)
+
+var Len *object.Function = object.NewFunction(
+	[]*object.Variable{
+		object.NewVariable(
+			object.VarName("v"),
+			nil,
+			nil,
+		),
+	},
+	false,
+	types.Int,
+	func(env *object.Environment, args ...object.Any) (object.Any, error) {
+		if len(args) != 1 {
+			return nil, fmt.Errorf("wrong number of arguments on len() call: given: %d, expected: %d",
+				len(args), 1)
+		}
+		arg := args[0]
+		switch ixbl := arg.(type) {
+		case object.Indexable:
+			return &object.Integer{Value: int64(ixbl.Len())}, nil
+		default:
+			return nil, fmt.Errorf("object of non-indexable type %s does not support len()",
+				arg.Type().Name())
+		}
 	},
 )
