@@ -8,7 +8,7 @@ import (
 	"yapsi/pkg/types"
 )
 
-var WriteLn *object.Function = object.NewFunction(
+var WriteLn *object.Builtin = object.NewBuiltin(
 	[]*object.Variable{
 		object.NewVariable(
 			object.VarName("args"),
@@ -28,7 +28,7 @@ var WriteLn *object.Function = object.NewFunction(
 	},
 )
 
-var Len *object.Function = object.NewFunction(
+var Len *object.Builtin = object.NewBuiltin(
 	[]*object.Variable{
 		object.NewVariable(
 			object.VarName("v"),

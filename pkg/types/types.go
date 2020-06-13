@@ -5,6 +5,7 @@ type TypeName string
 const (
 	ARRAY     TypeName = "array"
 	BOOL               = "bool"
+	BUILTIN            = "builtin"
 	CHAR               = "char"
 	FUNCTION           = "function"
 	INT                = "integer"
@@ -24,6 +25,7 @@ func (t *Type) Name() TypeName { return t.name }
 var (
 	Array     = &Type{name: ARRAY}
 	Bool      = &Type{name: BOOL}
+	Builtin   = &Type{name: BUILTIN}
 	Char      = &Type{name: CHAR}
 	Function  = &Type{name: FUNCTION}
 	Int       = &Type{name: INT}

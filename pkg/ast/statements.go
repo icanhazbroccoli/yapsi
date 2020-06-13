@@ -38,16 +38,38 @@ func (s *LabeledStmt) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitLabeledStmt(s)
 }
 
-type ProcedureStmt struct {
+type ProcedureDeclStmt struct {
+	Token      token.Token
 	Identifier *IdentifierExpr
-	Args       []Expression
+	Args       []FormalArg
+	Body       *BlockStmt
 }
 
-var _ (Statement) = (*ProcedureStmt)(nil)
+var _ (Statement) = (*ProcedureDeclStmt)(nil)
 
-func (s *ProcedureStmt) statementNode() {}
-func (s *ProcedureStmt) Visit(v NodeVisitor) (VisitorResult, error) {
-	return v.VisitProcedureStmt(s)
+func (s *ProcedureDeclStmt) statementNode() {}
+func (s *ProcedureDeclStmt) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitProcedureDeclStmt(s)
+}
+
+type FormalArg struct {
+	Identifer *IdentifierExpr
+	Type      *IdentifierExpr
+}
+
+type FunctionDeclStmt struct {
+	Token      token.Token
+	Identifier *IdentifierExpr
+	ReturnType *IdentifierExpr
+	Args       []FormalArg
+	Body       *BlockStmt
+}
+
+var _ Expression = (*FunctionDeclStmt)(nil)
+
+func (f *FunctionDeclStmt) expressionNode() {}
+func (f *FunctionDeclStmt) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitFunctionDeclStmt(f)
 }
 
 type CompoundStmt struct {
@@ -116,9 +138,11 @@ func (s *ProgramStmt) Visit(v NodeVisitor) (VisitorResult, error) {
 }
 
 type BlockStmt struct {
-	Token     token.Token
-	VarDecl   *VarDeclStmt
-	Statement *CompoundStmt
+	Token      token.Token
+	VarDecl    *VarDeclStmt
+	Procedures []*ProcedureDeclStmt
+	Functions  []*FunctionDeclStmt
+	Statement  *CompoundStmt
 }
 
 var _ Statement = (*BlockStmt)(nil)
@@ -136,4 +160,29 @@ type VarDeclStmt struct {
 func (s *VarDeclStmt) statementNode() {}
 func (s *VarDeclStmt) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitVarDeclStmt(s)
+}
+
+type ProcedureCallStmt struct {
+	Token      token.Token
+	Identifier *IdentifierExpr
+	Args       []Expression
+}
+
+var _ Statement = (*ProcedureCallStmt)(nil)
+
+func (s *ProcedureCallStmt) statementNode() {}
+func (s *ProcedureCallStmt) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitProcedureCallStmt(s)
+}
+
+type ReturnStmt struct {
+	Token      token.Token
+	Expression Expression
+}
+
+var _ Statement = (*ReturnStmt)(nil)
+
+func (s *ReturnStmt) statementNode() {}
+func (s *ReturnStmt) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitReturnStmt(s)
 }

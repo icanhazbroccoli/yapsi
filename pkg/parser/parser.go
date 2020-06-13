@@ -63,15 +63,172 @@ func (p *Parser) parseBlock() (*ast.BlockStmt, error) {
 	if err != nil {
 		return nil, err
 	}
+	procedures, functions, err := p.parseProcedureAndFunctionDeclStmts()
+	if err != nil {
+		return nil, err
+	}
 	stmt, err := p.parseCompoundStmt()
 	if err != nil {
 		return nil, err
 	}
 	return &ast.BlockStmt{
-		Token:     tok,
-		VarDecl:   declStmt,
-		Statement: stmt,
+		Token:      tok,
+		VarDecl:    declStmt,
+		Procedures: procedures,
+		Functions:  functions,
+		Statement:  stmt,
 	}, nil
+}
+
+func (p *Parser) parseProcedureAndFunctionDeclStmts() ([]*ast.ProcedureDeclStmt, []*ast.FunctionDeclStmt, error) {
+	procedures := []*ast.ProcedureDeclStmt{}
+	functions := []*ast.FunctionDeclStmt{}
+	for {
+		if p.match(token.PROCEDURE) {
+			procedure, err := p.parseProcedureDecl()
+			if err != nil {
+				return nil, nil, err
+			}
+			procedures = append(procedures, procedure)
+		} else if p.match(token.FUNCTION) {
+			function, err := p.parseFunctionDecl()
+			if err != nil {
+				return nil, nil, err
+			}
+			functions = append(functions, function)
+		} else {
+			break
+		}
+	}
+	return procedures, functions, nil
+}
+
+// <procedure declaration> ::= <procedure heading> <block>
+//
+// <procedure heading> ::= procedure <identifier> ; |
+// 		procedure <identifier> ( <formal parameter section> {;<formal parameter section>} );
+//
+// <formal parameter section> ::= <parameter group> | var <parameter group> |
+// 		function <parameter group> | procedure <identifier> { , <identifier>}
+//
+// <parameter group> ::= <identifier> {, <identifier>} : <type identifier>
+func (p *Parser) parseProcedureDecl() (*ast.ProcedureDeclStmt, error) {
+	tok := p.previous()
+	ident, err := p.consume(token.IDENT)
+	if err != nil {
+		return nil, err
+	}
+	args, err := p.parseArgumentListWithTypes()
+	if err != nil {
+		return nil, err
+	}
+	if _, err := p.consume(token.SEMICOLON); err != nil {
+		return nil, err
+	}
+	block, err := p.parseBlock()
+	if err != nil {
+		return nil, err
+	}
+	return &ast.ProcedureDeclStmt{
+		Token: tok,
+		Identifier: &ast.IdentifierExpr{
+			Token: ident,
+			Value: ident.Literal,
+		},
+		Args: args,
+		Body: block,
+	}, nil
+}
+
+// <function declaration> ::= <function heading> <block>
+// <function heading> ::= function <identifier> : <result type> ; |
+// 		function <identifier> ( <formal parameter section> {;<formal parameter section>} ) : <result type> ;
+// <result type> ::= <type identifier>
+func (p *Parser) parseFunctionDecl() (*ast.FunctionDeclStmt, error) {
+	tok := p.previous()
+	ident, err := p.consume(token.IDENT)
+	if err != nil {
+		return nil, err
+	}
+	args, err := p.parseArgumentListWithTypes()
+	if err != nil {
+		return nil, err
+	}
+	if _, err := p.consume(token.COLON); err != nil {
+		return nil, err
+	}
+	typident, err := p.consume(token.IDENT)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := p.consume(token.SEMICOLON); err != nil {
+		return nil, err
+	}
+	block, err := p.parseBlock()
+	if err != nil {
+		return nil, err
+	}
+	if _, err := p.consume(token.SEMICOLON); err != nil {
+		return nil, err
+	}
+	return &ast.FunctionDeclStmt{
+		Token: tok,
+		Identifier: &ast.IdentifierExpr{
+			Token: ident,
+			Value: ident.Literal,
+		},
+		ReturnType: &ast.IdentifierExpr{
+			Token: typident,
+			Value: typident.Literal,
+		},
+		Args: args,
+		Body: block,
+	}, nil
+}
+
+func (p *Parser) parseArgumentListWithTypes() ([]ast.FormalArg, error) {
+	args := []ast.FormalArg{}
+	if p.match(token.LPAREN) {
+		for {
+			idents := []*ast.IdentifierExpr{}
+			for {
+				varident, err := p.consume(token.IDENT)
+				if err != nil {
+					return nil, err
+				}
+				idents = append(idents, &ast.IdentifierExpr{
+					Token: varident,
+					Value: varident.Literal,
+				})
+				if !p.match(token.COMMA) {
+					break
+				}
+			}
+			if _, err := p.consume(token.COLON); err != nil {
+				return nil, err
+			}
+			typident, err := p.consume(token.IDENT)
+			if err != nil {
+				return nil, err
+			}
+			for _, ident := range idents {
+				args = append(args, ast.FormalArg{
+					Identifer: ident,
+					Type: &ast.IdentifierExpr{
+						Token: typident,
+						Value: typident.Literal,
+					},
+				})
+			}
+			if !p.match(token.COMMA) {
+				break
+			}
+		}
+		if _, err := p.consume(token.RPAREN); err != nil {
+			return nil, err
+		}
+	}
+	return args, nil
 }
 
 func (p *Parser) parseVarDeclStmt() (*ast.VarDeclStmt, error) {
@@ -80,13 +237,14 @@ func (p *Parser) parseVarDeclStmt() (*ast.VarDeclStmt, error) {
 	}
 	tok := p.previous()
 	mappings := make(map[string]string)
+Decl:
 	for {
 		idents := []string{}
 		for {
-			ident, err := p.consume(token.IDENT)
-			if err != nil {
-				return nil, err
+			if !p.match(token.IDENT) {
+				break Decl
 			}
+			ident := p.previous()
 			idents = append(idents, ident.Literal)
 			if p.match(token.COLON) {
 				break
@@ -294,7 +452,7 @@ func (p *Parser) parseSimpleStmt() (ast.Statement, error) {
 				return nil, err
 			}
 		}
-		return &ast.ProcedureStmt{
+		return &ast.ProcedureCallStmt{
 			Identifier: &ast.IdentifierExpr{
 				Token: ident,
 				Value: ident.Literal,
@@ -341,7 +499,7 @@ func (p *Parser) parseFactor() (ast.Expression, error) {
 			if _, err := p.consume(token.RPAREN); err != nil {
 				return nil, err
 			}
-			return &ast.FunctionExpr{
+			return &ast.FunctionCallExpr{
 				Token:      ident.Token,
 				Identifier: ident,
 				Args:       args,

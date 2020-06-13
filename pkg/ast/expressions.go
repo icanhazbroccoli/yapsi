@@ -9,9 +9,9 @@ type IdentifierExpr struct {
 
 var _ Expression = (*IdentifierExpr)(nil)
 
-func (i *IdentifierExpr) expressionNode() {}
-func (i *IdentifierExpr) Visit(v NodeVisitor) (VisitorResult, error) {
-	return v.VisitIdentifierExpr(i)
+func (e *IdentifierExpr) expressionNode() {}
+func (e *IdentifierExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitIdentifierExpr(e)
 }
 
 type UnaryExpr struct {
@@ -21,9 +21,9 @@ type UnaryExpr struct {
 
 var _ Expression = (*UnaryExpr)(nil)
 
-func (u *UnaryExpr) expressionNode() {}
-func (u *UnaryExpr) Visit(v NodeVisitor) (VisitorResult, error) {
-	return v.VisitUnaryExpr(u)
+func (e *UnaryExpr) expressionNode() {}
+func (e *UnaryExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitUnaryExpr(e)
 }
 
 type BinaryExpr struct {
@@ -33,9 +33,9 @@ type BinaryExpr struct {
 
 var _ Expression = (*BinaryExpr)(nil)
 
-func (b *BinaryExpr) expressionNode() {}
-func (b *BinaryExpr) Visit(v NodeVisitor) (VisitorResult, error) {
-	return v.VisitBinaryExpr(b)
+func (e *BinaryExpr) expressionNode() {}
+func (e *BinaryExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitBinaryExpr(e)
 }
 
 type ElementExpr struct {
@@ -55,20 +55,20 @@ type SetExpr struct {
 
 var _ Expression = (*SetExpr)(nil)
 
-func (s *SetExpr) expressionNode() {}
-func (s *SetExpr) Visit(v NodeVisitor) (VisitorResult, error) {
-	return v.VisitSetExpr(s)
+func (e *SetExpr) expressionNode() {}
+func (e *SetExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitSetExpr(e)
 }
 
-type FunctionExpr struct {
+type FunctionCallExpr struct {
 	Token      token.Token
 	Identifier *IdentifierExpr
 	Args       []Expression
 }
 
-var _ Expression = (*FunctionExpr)(nil)
+var _ Expression = (*FunctionCallExpr)(nil)
 
-func (f *FunctionExpr) expressionNode() {}
-func (f *FunctionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
-	return v.VisitFunctionExpr(f)
+func (e *FunctionCallExpr) expressionNode() {}
+func (e *FunctionCallExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitFunctionCallExpr(e)
 }

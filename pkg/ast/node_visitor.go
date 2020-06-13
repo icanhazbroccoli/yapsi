@@ -13,7 +13,7 @@ type NodeVisitor interface {
 	VisitBinaryExpr(*BinaryExpr) (VisitorResult, error)
 	VisitElementExpr(*ElementExpr) (VisitorResult, error)
 	VisitSetExpr(*SetExpr) (VisitorResult, error)
-	VisitFunctionExpr(*FunctionExpr) (VisitorResult, error)
+	VisitFunctionCallExpr(*FunctionCallExpr) (VisitorResult, error)
 
 	VisitProgramStmt(*ProgramStmt) (VisitorResult, error)
 	VisitBlockStmt(*BlockStmt) (VisitorResult, error)
@@ -21,9 +21,12 @@ type NodeVisitor interface {
 	VisitAssignmentStmt(*AssignmentStmt) (VisitorResult, error)
 	VisitGotoStmt(*GotoStmt) (VisitorResult, error)
 	VisitLabeledStmt(*LabeledStmt) (VisitorResult, error)
-	VisitProcedureStmt(*ProcedureStmt) (VisitorResult, error)
+	VisitProcedureDeclStmt(*ProcedureDeclStmt) (VisitorResult, error)
+	VisitFunctionDeclStmt(*FunctionDeclStmt) (VisitorResult, error)
 	VisitIfStmt(*IfStmt) (VisitorResult, error)
 	VisitWhileStmt(*WhileStmt) (VisitorResult, error)
 	VisitRepeatStmt(*RepeatStmt) (VisitorResult, error)
 	VisitVarDeclStmt(*VarDeclStmt) (VisitorResult, error)
+	VisitProcedureCallStmt(*ProcedureCallStmt) (VisitorResult, error)
+	VisitReturnStmt(*ReturnStmt) (VisitorResult, error)
 }

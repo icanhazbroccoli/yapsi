@@ -1,7 +1,16 @@
 program HelloWorld;
 
 var
-    i : integer
+    i : integer;
+
+function fib(n : integer) : integer;
+begin
+    if n <= 1
+    then
+        result := n
+    else
+        result := fib(n-1) + fib(n-2)
+end;
 
 begin
 
@@ -11,6 +20,8 @@ begin
     begin
         writeln('iteration', i, ':', 'Hello World!');
         i := i + 1
-    end
+    end;
+
+    writeln('done')
 
 end.

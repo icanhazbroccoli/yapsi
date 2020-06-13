@@ -178,14 +178,27 @@ func (i *Interpreter) VisitBlockStmt(node *ast.BlockStmt) (ast.VisitorResult, er
 	if _, err := node.VarDecl.Visit(i); err != nil {
 		return nil, err
 	}
+	for _, procedure := range node.Procedures {
+		if _, err := procedure.Visit(i); err != nil {
+			return nil, err
+		}
+	}
+	for _, function := range node.Functions {
+		if _, err := function.Visit(i); err != nil {
+			return nil, err
+		}
+	}
 	return node.Statement.Visit(i)
 }
 
 func (i *Interpreter) VisitCompoundStmt(node *ast.CompoundStmt) (ast.VisitorResult, error) {
 	for _, stmt := range node.Statements {
-		_, err := stmt.Visit(i)
+		res, err := stmt.Visit(i)
 		if err != nil {
 			return nil, err
+		}
+		if _, ok := stmt.(*ast.ReturnStmt); ok {
+			return res, nil
 		}
 	}
 	return nil, nil
@@ -217,7 +230,7 @@ func (i *Interpreter) VisitLabeledStmt(node *ast.LabeledStmt) (ast.VisitorResult
 	return node.Stmt.Visit(i)
 }
 
-func (i *Interpreter) VisitProcedureStmt(node *ast.ProcedureStmt) (ast.VisitorResult, error) {
+func (i *Interpreter) VisitProcedureCallStmt(node *ast.ProcedureCallStmt) (ast.VisitorResult, error) {
 	ident := node.Identifier.Value
 	lr, ok := i.env.LookupVar(object.VarName(ident))
 	if !ok {
@@ -244,25 +257,47 @@ func (i *Interpreter) VisitProcedureStmt(node *ast.ProcedureStmt) (ast.VisitorRe
 	return nil, err
 }
 
-func (i *Interpreter) VisitFunctionExpr(node *ast.FunctionExpr) (ast.VisitorResult, error) {
-	ident := node.Identifier.Value
-	lr, ok := i.env.LookupVar(object.VarName(ident))
+func (i *Interpreter) VisitFunctionCallExpr(node *ast.FunctionCallExpr) (ast.VisitorResult, error) {
+	ident := object.VarName(node.Token.Literal)
+	f, ok := i.env.LookupVar(ident)
 	if !ok {
-		return nil, undefinedIdentErr(ident)
+		return nil, undefinedIdentErr(string(ident))
 	}
-	callable, ok := lr.(object.Callable)
+	function, ok := f.(*object.Function)
 	if !ok {
-		return nil, uncallableEntityErr(ident)
+		return nil, uncallableEntityErr(string(ident))
 	}
-	args := make([]object.Any, 0, len(node.Args))
-	for _, arg := range node.Args {
-		ar, err := arg.Visit(i)
+	prevEnv := i.env
+	callEnv := object.NewEnvironment(i.env)
+	formal := function.Params
+
+	if len(formal) != len(node.Args) {
+		return nil, wrongCallableArgLenErr(string(ident), len(formal), len(node.Args))
+	}
+
+	for ix := 0; ix < len(formal); ix++ {
+		if err := callEnv.DeclareVar(formal[ix].Name(), formal[ix].Type()); err != nil {
+			return nil, err
+		}
+		value, err := node.Args[ix].Visit(i)
 		if err != nil {
 			return nil, err
 		}
-		args = append(args, ar.(object.Any))
+		if err := callEnv.AssignVar(formal[ix].Name(), value.(object.Any)); err != nil {
+			return nil, err
+		}
 	}
-	return callable.CallReturn(i.env, args...)
+
+	i.env = callEnv
+
+	res, err := function.Body.Visit(i)
+	if err != nil {
+		return nil, err
+	}
+
+	i.env = prevEnv
+
+	return res, nil
 }
 
 func (i *Interpreter) VisitIfStmt(node *ast.IfStmt) (ast.VisitorResult, error) {
@@ -335,6 +370,47 @@ func (i *Interpreter) VisitVarDeclStmt(node *ast.VarDeclStmt) (ast.VisitorResult
 		}
 	}
 	return nil, nil
+}
+
+func (i *Interpreter) VisitFunctionDeclStmt(node *ast.FunctionDeclStmt) (ast.VisitorResult, error) {
+	ident := node.Identifier.Value
+	retTypeIdent := node.ReturnType.Value
+	retType, ok := i.env.LookupType(types.TypeName(retTypeIdent))
+	if !ok {
+		return nil, fmt.Errorf("Undeclared type: %s", retTypeIdent)
+	}
+	params := []*object.Variable{}
+	for _, arg := range node.Args {
+		ident := arg.Identifer.Value
+		typIdent := arg.Type.Value
+		typ, ok := i.env.LookupType(types.TypeName(typIdent))
+		if !ok {
+			return nil, fmt.Errorf("Undeclared type: %s", typIdent)
+		}
+		params = append(params, object.NewVariable(object.VarName(ident), typ, nil))
+	}
+	function := &object.Function{
+		Identifier: ident,
+		ReturnType: retType,
+		Params:     params,
+		Body:       node.Body,
+	}
+	if err := i.env.DeclareAssignVar(object.VarName(ident), function); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+func (i *Interpreter) VisitReturnStmt(node *ast.ReturnStmt) (ast.VisitorResult, error) {
+	res, err := node.Expression.Visit(i)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (i *Interpreter) VisitProcedureDeclStmt(node *ast.ProcedureDeclStmt) (ast.VisitorResult, error) {
+	panic("not implemented")
 }
 
 func declareBaseTypes(env *object.Environment) {

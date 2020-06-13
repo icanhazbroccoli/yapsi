@@ -80,7 +80,7 @@ func (p *AstPrinter) VisitLabeledStmt(node *ast.LabeledStmt) (ast.VisitorResult,
 	return label.(string) + " : " + stmt.(string), nil
 }
 
-func (p *AstPrinter) VisitProcedureStmt(node *ast.ProcedureStmt) (ast.VisitorResult, error) {
+func (p *AstPrinter) VisitProcedureCallStmt(node *ast.ProcedureCallStmt) (ast.VisitorResult, error) {
 	var out bytes.Buffer
 	ident, _ := node.Identifier.Visit(p)
 	out.WriteString(ident.(string))
@@ -97,7 +97,7 @@ func (p *AstPrinter) VisitProcedureStmt(node *ast.ProcedureStmt) (ast.VisitorRes
 	return out.String(), nil
 }
 
-func (p *AstPrinter) VisitFunctionExpr(node *ast.FunctionExpr) (ast.VisitorResult, error) {
+func (p *AstPrinter) VisitFunctionCallExpr(node *ast.FunctionCallExpr) (ast.VisitorResult, error) {
 	var out bytes.Buffer
 	ident, _ := node.Identifier.Visit(p)
 	out.WriteString(ident.(string))
@@ -183,6 +183,24 @@ func (p *AstPrinter) VisitBlockStmt(node *ast.BlockStmt) (ast.VisitorResult, err
 
 		out.WriteString(decl.(string) + "\n\n")
 	}
+	if len(node.Procedures) > 0 {
+		for _, procedure := range node.Procedures {
+			str, err := procedure.Visit(p)
+			if err != nil {
+				return nil, err
+			}
+			out.WriteString(str.(string) + ";\n\n")
+		}
+	}
+	if len(node.Functions) > 0 {
+		for _, function := range node.Functions {
+			str, err := function.Visit(p)
+			if err != nil {
+				return nil, err
+			}
+			out.WriteString(str.(string) + ";\n\n")
+		}
+	}
 	res, _ := node.Statement.Visit(p)
 	out.WriteString(res.(string))
 	return out.String(), nil
@@ -211,4 +229,88 @@ func (p *AstPrinter) VisitVarDeclStmt(node *ast.VarDeclStmt) (ast.VisitorResult,
 	}
 	out.WriteString(strings.Join(chunks, ";\n"))
 	return out.String(), nil
+}
+
+func (p *AstPrinter) VisitProcedureDeclStmt(node *ast.ProcedureDeclStmt) (ast.VisitorResult, error) {
+	var out bytes.Buffer
+	out.WriteString("procedure ")
+	ident, err := node.Identifier.Visit(p)
+	if err != nil {
+		return nil, err
+	}
+	out.WriteString(ident.(string))
+	if len(node.Args) > 0 {
+		args, err := p.visitArgList(node.Args)
+		if err != nil {
+			return nil, err
+		}
+		out.WriteRune('(')
+		out.WriteString(args)
+		out.WriteRune(')')
+	}
+	out.WriteRune(';')
+	out.WriteRune('\n')
+	body, err := node.Body.Visit(p)
+	if err != nil {
+		return nil, err
+	}
+	out.WriteString(body.(string))
+	return out.String(), nil
+}
+
+func (p *AstPrinter) VisitFunctionDeclStmt(node *ast.FunctionDeclStmt) (ast.VisitorResult, error) {
+	var out bytes.Buffer
+	out.WriteString("function ")
+	ident, err := node.Identifier.Visit(p)
+	if err != nil {
+		return nil, err
+	}
+	typident, err := node.ReturnType.Visit(p)
+	if err != nil {
+		return nil, err
+	}
+	out.WriteString(ident.(string))
+	if len(node.Args) > 0 {
+		args, err := p.visitArgList(node.Args)
+		if err != nil {
+			return nil, err
+		}
+		out.WriteRune('(')
+		out.WriteString(args)
+		out.WriteRune(')')
+	}
+	out.WriteString(" : ")
+	out.WriteString(typident.(string))
+	out.WriteRune(';')
+	out.WriteRune('\n')
+	body, err := node.Body.Visit(p)
+	if err != nil {
+		return nil, err
+	}
+	out.WriteString(body.(string))
+	return out.String(), nil
+}
+
+func (p *AstPrinter) visitArgList(args []ast.FormalArg) (string, error) {
+	chunks := make([]string, 0, len(args))
+	for _, arg := range args {
+		ident, err := arg.Identifer.Visit(p)
+		if err != nil {
+			return "", err
+		}
+		typ, err := arg.Type.Visit(p)
+		if err != nil {
+			return "", err
+		}
+		chunks = append(chunks, ident.(string)+" : "+typ.(string))
+	}
+	return strings.Join(chunks, ", "), nil
+}
+
+func (p *AstPrinter) VisitReturnStmt(node *ast.ReturnStmt) (ast.VisitorResult, error) {
+	expr, err := node.Expression.Visit(p)
+	if err != nil {
+		return nil, err
+	}
+	return "return " + expr.(string), nil
 }

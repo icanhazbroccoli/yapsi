@@ -34,3 +34,8 @@ func uncallableEntityErr(ident string) error {
 func wrongIfCondTypErr(cond interface{}) error {
 	return fmt.Errorf("Condition type must be a boolean expression, got: %T", cond)
 }
+
+func wrongCallableArgLenErr(ident string, exp, got int) error {
+	return fmt.Errorf("Wrong number of arguments provided to function %q call: got %d, want: %d",
+		ident, got, exp)
+}

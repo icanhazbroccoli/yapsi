@@ -17,8 +17,9 @@ func NewVariable(name VarName, typ *types.Type, val Any) *Variable {
 	return &Variable{val, name, typ}
 }
 
-func (v *Variable) Name() VarName { return v.name }
-func (v *Variable) Value() Any    { return v.Any }
+func (v *Variable) Name() VarName     { return v.name }
+func (v *Variable) Value() Any        { return v.Any }
+func (v *Variable) Type() *types.Type { return v.typ }
 func (v *Variable) SetValue(val Any) error {
 	if v.typ != val.Type() {
 		return fmt.Errorf("Type mismatch for variable `%s`: want: %s, got: %s",
