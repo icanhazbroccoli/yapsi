@@ -1,8 +1,5 @@
 program HelloWorld;
 
-var
-    i : integer;
-
 function fib(n : integer) : integer;
 begin
     if n <= 1
@@ -13,15 +10,5 @@ begin
 end;
 
 begin
-
-    i := 0;
-
-    while i < 10 do
-    begin
-        writeln('iteration', i, ':', 'Hello World!');
-        i := i + 1
-    end;
-
-    writeln('done')
-
+    writeln(fib(10))
 end.

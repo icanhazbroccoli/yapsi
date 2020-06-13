@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+
 	"yapsi/pkg/ast"
 	"yapsi/pkg/builtin"
 	"yapsi/pkg/object"
@@ -175,8 +176,10 @@ func (i *Interpreter) VisitProgramStmt(node *ast.ProgramStmt) (ast.VisitorResult
 }
 
 func (i *Interpreter) VisitBlockStmt(node *ast.BlockStmt) (ast.VisitorResult, error) {
-	if _, err := node.VarDecl.Visit(i); err != nil {
-		return nil, err
+	if node.VarDecl != nil {
+		if _, err := node.VarDecl.Visit(i); err != nil {
+			return nil, err
+		}
 	}
 	for _, procedure := range node.Procedures {
 		if _, err := procedure.Visit(i); err != nil {
@@ -263,6 +266,18 @@ func (i *Interpreter) VisitFunctionCallExpr(node *ast.FunctionCallExpr) (ast.Vis
 	if !ok {
 		return nil, undefinedIdentErr(string(ident))
 	}
+	args := make([]object.Any, 0, len(node.Args))
+	for _, arg := range node.Args {
+		value, err := arg.Visit(i)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, value.(object.Any))
+	}
+	// TODO: refactor me
+	if builtin, ok := f.(*object.Builtin); ok {
+		return builtin.CallReturn(i.env, args...)
+	}
 	function, ok := f.(*object.Function)
 	if !ok {
 		return nil, uncallableEntityErr(string(ident))
@@ -279,23 +294,26 @@ func (i *Interpreter) VisitFunctionCallExpr(node *ast.FunctionCallExpr) (ast.Vis
 		if err := callEnv.DeclareVar(formal[ix].Name(), formal[ix].Type()); err != nil {
 			return nil, err
 		}
-		value, err := node.Args[ix].Visit(i)
-		if err != nil {
-			return nil, err
-		}
-		if err := callEnv.AssignVar(formal[ix].Name(), value.(object.Any)); err != nil {
+		if err := callEnv.AssignVar(formal[ix].Name(), args[ix]); err != nil {
 			return nil, err
 		}
 	}
 
+	ret := object.NewVariable(object.VarName("result"), function.ReturnType, nil)
+	if err := callEnv.DeclareVar(ret.Name(), ret.Type()); err != nil {
+		return nil, err
+	}
+
 	i.env = callEnv
 
-	res, err := function.Body.Visit(i)
+	_, err := function.Body.Visit(i)
 	if err != nil {
 		return nil, err
 	}
 
 	i.env = prevEnv
+
+	res, _ := callEnv.LookupVar(object.VarName("result"))
 
 	return res, nil
 }
