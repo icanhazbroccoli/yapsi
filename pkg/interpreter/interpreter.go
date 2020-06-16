@@ -233,31 +233,81 @@ func (i *Interpreter) VisitLabeledStmt(node *ast.LabeledStmt) (ast.VisitorResult
 	return node.Stmt.Visit(i)
 }
 
-func (i *Interpreter) VisitProcedureCallStmt(node *ast.ProcedureCallStmt) (ast.VisitorResult, error) {
-	ident := node.Identifier.Value
-	lr, ok := i.env.LookupVar(object.VarName(ident))
-	if !ok {
-		return nil, undefinedIdentErr(ident)
-	}
-	callable, ok := lr.(object.Callable)
-	if !ok {
-		return nil, uncallableEntityErr(ident)
-	}
-	args := make([]object.Any, 0, len(node.Args))
-	for _, arg := range node.Args {
-		ar, err := arg.Visit(i)
+func (i *Interpreter) evaluateArgs(in []ast.Expression) ([]object.Any, error) {
+	out := make([]object.Any, 0, len(in))
+	for _, arg := range in {
+		value, err := arg.Visit(i)
 		if err != nil {
 			return nil, err
 		}
-		args = append(args, ar.(object.Any))
+		out = append(out, value.(object.Any))
 	}
-	if callable.Returns() != nil {
-		//function
-		return callable.CallReturn(i.env, args...)
+	return out, nil
+}
+
+func (i *Interpreter) newEnvWithParams(formal []*object.Variable, actual []object.Any) (*object.Environment, error) {
+	env := object.NewEnvironment(i.env)
+	if len(formal) != len(actual) {
+		return nil, wrongCallableArgLenErr(len(formal), len(actual))
 	}
-	//procedure
-	err := callable.Call(i.env, args...)
-	return nil, err
+	for ix := 0; ix < len(formal); ix++ {
+		if err := env.DeclareVar(formal[ix].Name(), formal[ix].Type()); err != nil {
+			return nil, err
+		}
+		if err := env.AssignVar(formal[ix].Name(), actual[ix]); err != nil {
+			return nil, err
+		}
+	}
+	return env, nil
+}
+
+func (i *Interpreter) VisitProcedureCallStmt(node *ast.ProcedureCallStmt) (ast.VisitorResult, error) {
+	ident := object.VarName(node.Identifier.Value)
+	p, ok := i.env.LookupVar(ident)
+	if !ok {
+		return nil, undefinedIdentErr(string(ident))
+	}
+	args, err := i.evaluateArgs(node.Args)
+	if err != nil {
+		return nil, err
+	}
+	if builtin, ok := p.(*object.Builtin); ok {
+		return builtin.CallReturn(i.env, args...)
+	}
+	procedure, ok := p.(*object.Procedure)
+	if !ok {
+		return nil, uncallableEntityErr(string(ident))
+	}
+	oldEnv := i.env
+	newEnv, err := i.newEnvWithParams(procedure.Params, args)
+	if err != nil {
+		return nil, err
+	}
+
+	i.env = newEnv
+
+	if _, err := procedure.Body.Visit(i); err != nil {
+		return nil, err
+	}
+
+	for ix, arg := range node.Args {
+		extIdent, ok := arg.(*ast.IdentifierExpr)
+		if !ok {
+			continue
+		}
+		fVar := procedure.Params[ix]
+		fVal, _ := newEnv.LookupVar(fVar.Name())
+		if !ok {
+			// Should never happen but I want to keep it here in case variable
+			// removal would be supported in the future.
+			continue
+		}
+		oldEnv.AssignVar(object.VarName(extIdent.Value), fVal)
+	}
+
+	i.env = oldEnv
+
+	return nil, nil
 }
 
 func (i *Interpreter) VisitFunctionCallExpr(node *ast.FunctionCallExpr) (ast.VisitorResult, error) {
@@ -266,13 +316,9 @@ func (i *Interpreter) VisitFunctionCallExpr(node *ast.FunctionCallExpr) (ast.Vis
 	if !ok {
 		return nil, undefinedIdentErr(string(ident))
 	}
-	args := make([]object.Any, 0, len(node.Args))
-	for _, arg := range node.Args {
-		value, err := arg.Visit(i)
-		if err != nil {
-			return nil, err
-		}
-		args = append(args, value.(object.Any))
+	args, err := i.evaluateArgs(node.Args)
+	if err != nil {
+		return nil, err
 	}
 	// TODO: refactor me
 	if builtin, ok := f.(*object.Builtin); ok {
@@ -282,38 +328,26 @@ func (i *Interpreter) VisitFunctionCallExpr(node *ast.FunctionCallExpr) (ast.Vis
 	if !ok {
 		return nil, uncallableEntityErr(string(ident))
 	}
-	prevEnv := i.env
-	callEnv := object.NewEnvironment(i.env)
-	formal := function.Params
-
-	if len(formal) != len(node.Args) {
-		return nil, wrongCallableArgLenErr(string(ident), len(formal), len(node.Args))
-	}
-
-	for ix := 0; ix < len(formal); ix++ {
-		if err := callEnv.DeclareVar(formal[ix].Name(), formal[ix].Type()); err != nil {
-			return nil, err
-		}
-		if err := callEnv.AssignVar(formal[ix].Name(), args[ix]); err != nil {
-			return nil, err
-		}
+	oldEnv := i.env
+	newEnv, err := i.newEnvWithParams(function.Params, args)
+	if err != nil {
+		return nil, callableErr(string(ident), err)
 	}
 
 	ret := object.NewVariable(object.VarName("result"), function.ReturnType, nil)
-	if err := callEnv.DeclareVar(ret.Name(), ret.Type()); err != nil {
+	if err := newEnv.DeclareVar(ret.Name(), ret.Type()); err != nil {
 		return nil, err
 	}
 
-	i.env = callEnv
+	i.env = newEnv
 
-	_, err := function.Body.Visit(i)
-	if err != nil {
+	if _, err := function.Body.Visit(i); err != nil {
 		return nil, err
 	}
 
-	i.env = prevEnv
+	i.env = oldEnv
 
-	res, _ := callEnv.LookupVar(object.VarName("result"))
+	res, _ := newEnv.LookupVar(object.VarName("result"))
 
 	return res, nil
 }
@@ -428,7 +462,26 @@ func (i *Interpreter) VisitReturnStmt(node *ast.ReturnStmt) (ast.VisitorResult, 
 }
 
 func (i *Interpreter) VisitProcedureDeclStmt(node *ast.ProcedureDeclStmt) (ast.VisitorResult, error) {
-	panic("not implemented")
+	ident := node.Identifier.Value
+	params := []*object.Variable{}
+	for _, arg := range node.Args {
+		ident := arg.Identifer.Value
+		typIdent := arg.Type.Value
+		typ, ok := i.env.LookupType(types.TypeName(typIdent))
+		if !ok {
+			return nil, fmt.Errorf("Undeclared type: %s", typIdent)
+		}
+		params = append(params, object.NewVariable(object.VarName(ident), typ, nil))
+	}
+	procedure := &object.Procedure{
+		Identifier: ident,
+		Params:     params,
+		Body:       node.Body,
+	}
+	if err := i.env.DeclareAssignVar(object.VarName(ident), procedure); err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 func declareBaseTypes(env *object.Environment) {

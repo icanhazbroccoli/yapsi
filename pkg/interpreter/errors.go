@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"runtime"
 	"yapsi/pkg/types"
 )
 
@@ -20,6 +21,7 @@ func unsupportedBinaryOpErr(op string, t1, t2 *types.Type) error {
 }
 
 func undefinedIdentErr(ident string) error {
+	runtime.Breakpoint()
 	return fmt.Errorf("Variable %q is not defined", ident)
 }
 
@@ -35,7 +37,10 @@ func wrongIfCondTypErr(cond interface{}) error {
 	return fmt.Errorf("Condition type must be a boolean expression, got: %T", cond)
 }
 
-func wrongCallableArgLenErr(ident string, exp, got int) error {
-	return fmt.Errorf("Wrong number of arguments provided to function %q call: got %d, want: %d",
-		ident, got, exp)
+func wrongCallableArgLenErr(exp, got int) error {
+	return fmt.Errorf("Wrong number of arguments provided: got %d, want: %d", got, exp)
+}
+
+func callableErr(ident string, err error) error {
+	return fmt.Errorf("Failed to call `%s`: %s", ident, err)
 }

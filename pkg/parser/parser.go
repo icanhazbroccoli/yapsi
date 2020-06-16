@@ -453,6 +453,7 @@ func (p *Parser) parseSimpleStmt() (ast.Statement, error) {
 			}
 		}
 		return &ast.ProcedureCallStmt{
+			Token: ident,
 			Identifier: &ast.IdentifierExpr{
 				Token: ident,
 				Value: ident.Literal,

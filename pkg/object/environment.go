@@ -22,7 +22,7 @@ func NewEnvironment(super *Environment) *Environment {
 func (e *Environment) LookupType(name types.TypeName) (*types.Type, bool) {
 	ptr := e
 	for ptr != nil {
-		if typ, ok := e.types.Lookup(name); ok {
+		if typ, ok := ptr.types.Lookup(name); ok {
 			return typ, true
 		}
 		ptr = ptr.super
