@@ -685,6 +685,7 @@ func TestParseSimpleStmt(t *testing.T) {
 				newToken(token.IDENT, "foo"),
 			},
 			wantStmt: &ast.ProcedureCallStmt{
+				Token:      newToken(token.IDENT, "foo"),
 				Identifier: newIdent("foo"),
 				Args:       []ast.Expression{},
 			},
@@ -703,6 +704,7 @@ func TestParseSimpleStmt(t *testing.T) {
 				newToken(token.RPAREN, ")"),
 			},
 			wantStmt: &ast.ProcedureCallStmt{
+				Token:      newToken(token.IDENT, "foo"),
 				Identifier: newIdent("foo"),
 				Args: []ast.Expression{
 					newNumber("42"),
@@ -880,6 +882,55 @@ func TestParseStmt(t *testing.T) {
 		l := NewTestLexer(tt.input)
 		p := New(l)
 		stmt, err := p.parseStmt()
+		assert.Equal(t, err, tt.wantErr)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, stmt, tt.wantStmt)
+	}
+}
+
+func TestTypeDeclStmt(t *testing.T) {
+	tests := []struct {
+		input    []token.Token
+		wantStmt ast.Statement
+		wantErr  error
+	}{
+		{
+			// type
+			//   myint = integer;
+			input: []token.Token{
+				newToken(token.TYPE, "type"),
+				newToken(token.IDENT, "myint"),
+				newToken(token.EQUAL, "="),
+				newToken(token.IDENT, "integer"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantStmt: &ast.TypeDeclStmt{
+				Token: newToken(token.TYPE, "type"),
+				Definitions: []ast.TypeDefinitionStmt{
+					{
+						Identifier: &ast.IdentifierExpr{
+							Token: newToken(token.IDENT, "myint"),
+							Value: "myint",
+						},
+						Definition: &ast.SimpleTypeDefinitionExpr{
+							Token: newToken(token.IDENT, "integer"),
+							Identifier: &ast.IdentifierExpr{
+								Token: newToken(token.IDENT, "integer"),
+								Value: "integer",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		stmt, err := p.parseTypeDeclStmt()
 		assert.Equal(t, err, tt.wantErr)
 		if err != nil {
 			continue

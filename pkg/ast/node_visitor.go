@@ -14,6 +14,7 @@ type NodeVisitor interface {
 	VisitElementExpr(*ElementExpr) (VisitorResult, error)
 	VisitSetExpr(*SetExpr) (VisitorResult, error)
 	VisitFunctionCallExpr(*FunctionCallExpr) (VisitorResult, error)
+	VisitSimpleTypeDefinitionExpr(*SimpleTypeDefinitionExpr) (VisitorResult, error)
 
 	VisitProgramStmt(*ProgramStmt) (VisitorResult, error)
 	VisitBlockStmt(*BlockStmt) (VisitorResult, error)
@@ -29,4 +30,6 @@ type NodeVisitor interface {
 	VisitVarDeclStmt(*VarDeclStmt) (VisitorResult, error)
 	VisitProcedureCallStmt(*ProcedureCallStmt) (VisitorResult, error)
 	VisitReturnStmt(*ReturnStmt) (VisitorResult, error)
+	VisitTypeDeclStmt(*TypeDeclStmt) (VisitorResult, error)
+	VisitTypeDefinitionStmt(*TypeDefinitionStmt) (VisitorResult, error)
 }

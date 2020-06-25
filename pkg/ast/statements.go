@@ -186,3 +186,27 @@ func (s *ReturnStmt) statementNode() {}
 func (s *ReturnStmt) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitReturnStmt(s)
 }
+
+type TypeDeclStmt struct {
+	Token       token.Token
+	Definitions []TypeDefinitionStmt
+}
+
+var _ Statement = (*TypeDeclStmt)(nil)
+
+func (s *TypeDeclStmt) statementNode() {}
+func (s *TypeDeclStmt) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitTypeDeclStmt(s)
+}
+
+type TypeDefinitionStmt struct {
+	Identifier *IdentifierExpr
+	Definition TypeDefinitionExpr
+}
+
+var _ Statement = (*TypeDefinitionStmt)(nil)
+
+func (s *TypeDefinitionStmt) statementNode() {}
+func (s *TypeDefinitionStmt) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitTypeDefinitionStmt(s)
+}

@@ -72,3 +72,18 @@ func (e *FunctionCallExpr) expressionNode() {}
 func (e *FunctionCallExpr) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitFunctionCallExpr(e)
 }
+
+type TypeDefinitionExpr interface{}
+
+type SimpleTypeDefinitionExpr struct {
+	Token      token.Token
+	Identifier *IdentifierExpr
+}
+
+var _ (Expression) = (*SimpleTypeDefinitionExpr)(nil)
+var _ (TypeDefinitionExpr) = (*SimpleTypeDefinitionExpr)(nil)
+
+func (e *SimpleTypeDefinitionExpr) expressionNode() {}
+func (e *SimpleTypeDefinitionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitSimpleTypeDefinitionExpr(e)
+}

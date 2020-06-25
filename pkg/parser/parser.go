@@ -80,6 +80,10 @@ func (p *Parser) parseBlock() (*ast.BlockStmt, error) {
 	}, nil
 }
 
+func (p *Parser) parseTypeDeclStmt() (*ast.TypeDeclStmt, error) {
+	panic("not implemented")
+}
+
 func (p *Parser) parseProcedureAndFunctionDeclStmts() ([]*ast.ProcedureDeclStmt, []*ast.FunctionDeclStmt, error) {
 	procedures := []*ast.ProcedureDeclStmt{}
 	functions := []*ast.FunctionDeclStmt{}
