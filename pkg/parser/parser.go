@@ -80,8 +80,52 @@ func (p *Parser) parseBlock() (*ast.BlockStmt, error) {
 	}, nil
 }
 
+// <type definition> ::= <identifier> = <type>
+// <type> ::= <simple type> | <structured type> | <pointer type>
+// <simple type> ::= <scalar type> | <subrange type> | <type identifier>
+// <scalar type> ::= (<identifier> {,<identifier>})
+// <subrange type> ::= <constant> .. <constant>
+// <type identifier> ::= <identifier>
 func (p *Parser) parseTypeDeclStmt() (*ast.TypeDeclStmt, error) {
-	panic("not implemented")
+	if !p.match(token.TYPE) {
+		return nil, nil
+	}
+	stmt := &ast.TypeDeclStmt{
+		Token: p.previous(),
+	}
+	defs := []ast.TypeDefinitionStmt{}
+	var def ast.TypeDefinitionExpr
+	for p.match(token.IDENT) {
+		tok := p.previous()
+		if _, err := p.consume(token.EQUAL); err != nil {
+			return nil, err
+		}
+		if p.match(token.IDENT) {
+			ident := p.previous()
+			def = &ast.SimpleTypeDefinitionExpr{
+				Token: ident,
+				Identifier: &ast.IdentifierExpr{
+					Token: ident,
+					Value: ident.Literal,
+				},
+			}
+		} else {
+			panic("not implemented")
+		}
+		if !p.match(token.SEMICOLON) {
+			break
+		}
+		defs = append(defs, ast.TypeDefinitionStmt{
+			Token: tok,
+			Identifier: &ast.IdentifierExpr{
+				Token: tok,
+				Value: tok.Literal,
+			},
+			Definition: def,
+		})
+	}
+	stmt.Definitions = defs
+	return stmt, nil
 }
 
 func (p *Parser) parseProcedureAndFunctionDeclStmts() ([]*ast.ProcedureDeclStmt, []*ast.FunctionDeclStmt, error) {

@@ -912,6 +912,7 @@ func TestTypeDeclStmt(t *testing.T) {
 				Token: newToken(token.TYPE, "type"),
 				Definitions: []ast.TypeDefinitionStmt{
 					{
+						Token: newToken(token.IDENT, "myint"),
 						Identifier: &ast.IdentifierExpr{
 							Token: newToken(token.IDENT, "myint"),
 							Value: "myint",
