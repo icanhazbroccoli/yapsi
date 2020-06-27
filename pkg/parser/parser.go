@@ -709,21 +709,6 @@ func (p *Parser) parseExpression() (ast.Expression, error) {
 	return expr, nil
 }
 
-func (p *Parser) parseTypes() ([]ast.Type, error) {
-	//TODO
-	panic("not implemented")
-}
-
-func (p *Parser) parseCallables() ([]ast.Callable, error) {
-	//TODO
-	panic("not implemented")
-}
-
-func (p *Parser) parseBody() ([]ast.Statement, error) {
-	//TODO
-	panic("not implemented")
-}
-
 func (p *Parser) match(tt ...token.TokenType) bool {
 	for _, t := range tt {
 		if p.check(t) {

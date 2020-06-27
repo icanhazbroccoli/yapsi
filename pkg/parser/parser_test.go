@@ -767,6 +767,7 @@ func TestParseStmt(t *testing.T) {
 						},
 					},
 					&ast.ProcedureCallStmt{
+						Token:      newToken(token.IDENT, "bar"),
 						Identifier: newIdent("bar"),
 						Args: []ast.Expression{
 							newNumber("42"),
@@ -868,6 +869,7 @@ func TestParseStmt(t *testing.T) {
 						},
 					},
 					&ast.ProcedureCallStmt{
+						Token:      newToken(token.IDENT, "writeln"),
 						Identifier: newIdent("writeln"),
 						Args: []ast.Expression{
 							newString("hello world"),
