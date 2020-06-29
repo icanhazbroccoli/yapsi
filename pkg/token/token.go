@@ -80,6 +80,7 @@ type Token struct {
 
 var keywords = map[string]TokenType{
 	"and":       AND,
+	"array":     ARRAY,
 	"begin":     BEGIN,
 	"case":      CASE,
 	"const":     CONST,
@@ -104,6 +105,7 @@ var keywords = map[string]TokenType{
 	"procedure": PROCEDURE,
 	"program":   PROGRAM,
 	"repeat":    REPEAT,
+	"set":       SET,
 	"then":      THEN,
 	"to":        TO,
 	"true":      TRUE,

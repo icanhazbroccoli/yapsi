@@ -202,7 +202,7 @@ func (s *TypeDeclStmt) Visit(v NodeVisitor) (VisitorResult, error) {
 type TypeDefinitionStmt struct {
 	Token      token.Token
 	Identifier *IdentifierExpr
-	Definition TypeDefinitionExpr
+	Definition TypeDefinitionExprIntf
 }
 
 var _ Statement = (*TypeDefinitionStmt)(nil)

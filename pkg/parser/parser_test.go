@@ -375,11 +375,11 @@ func TestParseFactor(t *testing.T) {
 		l := NewTestLexer(tt.input)
 		p := New(l)
 		expr, err := p.parseFactor()
-		assert.Equal(t, err, tt.wantErr)
+		assert.Equal(t, tt.wantErr, err)
 		if err != nil {
 			continue
 		}
-		assert.Equal(t, expr, tt.wantExpr)
+		assert.Equal(t, tt.wantExpr, expr)
 	}
 }
 
@@ -473,11 +473,11 @@ func TestParseTermExpr(t *testing.T) {
 		l := NewTestLexer(tt.input)
 		p := New(l)
 		expr, err := p.parseTerm()
-		assert.Equal(t, err, tt.wantErr)
+		assert.Equal(t, tt.wantErr, err)
 		if err != nil {
 			continue
 		}
-		assert.Equal(t, expr, tt.wantExpr)
+		assert.Equal(t, tt.wantExpr, expr)
 	}
 }
 
@@ -600,11 +600,11 @@ func TestParseSimpleExpression(t *testing.T) {
 		l := NewTestLexer(tt.input)
 		p := New(l)
 		expr, err := p.parseSimpleExpression()
-		assert.Equal(t, err, tt.wantErr)
+		assert.Equal(t, tt.wantErr, err)
 		if err != nil {
 			continue
 		}
-		assert.Equal(t, expr, tt.wantExpr)
+		assert.Equal(t, tt.wantExpr, expr)
 	}
 }
 
@@ -644,11 +644,11 @@ func TestParseExpression(t *testing.T) {
 		l := NewTestLexer(tt.input)
 		p := New(l)
 		expr, err := p.parseExpression()
-		assert.Equal(t, err, tt.wantErr)
+		assert.Equal(t, tt.wantErr, err)
 		if err != nil {
 			continue
 		}
-		assert.Equal(t, expr, tt.wantExpr)
+		assert.Equal(t, tt.wantExpr, expr)
 	}
 }
 
@@ -723,11 +723,11 @@ func TestParseSimpleStmt(t *testing.T) {
 		l := NewTestLexer(tt.input)
 		p := New(l)
 		stmt, err := p.parseSimpleStmt()
-		assert.Equal(t, err, tt.wantErr)
+		assert.Equal(t, tt.wantErr, err)
 		if err != nil {
 			continue
 		}
-		assert.Equal(t, stmt, tt.wantStmt)
+		assert.Equal(t, tt.wantStmt, stmt)
 	}
 }
 
@@ -884,11 +884,11 @@ func TestParseStmt(t *testing.T) {
 		l := NewTestLexer(tt.input)
 		p := New(l)
 		stmt, err := p.parseStmt()
-		assert.Equal(t, err, tt.wantErr)
+		assert.Equal(t, tt.wantErr, err)
 		if err != nil {
 			continue
 		}
-		assert.Equal(t, stmt, tt.wantStmt)
+		assert.Equal(t, tt.wantStmt, stmt)
 	}
 }
 
@@ -928,16 +928,140 @@ func TestTypeDeclStmt(t *testing.T) {
 				},
 			},
 		},
+		{
+			// type
+			//   myrange1 = 0 .. 10;
+			input: []token.Token{
+				newToken(token.TYPE, "type"),
+				newToken(token.IDENT, "myrange"),
+				newToken(token.EQUAL, "="),
+				newToken(token.NUMBER, "0"),
+				newToken(token.DOTDOT, ".."),
+				newToken(token.NUMBER, "10"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantStmt: &ast.TypeDeclStmt{
+				Token: newToken(token.TYPE, "type"),
+				Definitions: []ast.TypeDefinitionStmt{
+					{
+						Token: newToken(token.IDENT, "myrange"),
+						Identifier: &ast.IdentifierExpr{
+							Token: newToken(token.IDENT, "myrange"),
+							Value: "myrange",
+						},
+						Definition: &ast.SubrangeTypeDefinitionExpr{
+							Token: newToken(token.NUMBER, "0"),
+							Left:  newNumber("0"),
+							Right: newNumber("10"),
+						},
+					},
+				},
+			},
+		},
+		{
+			// type
+			//   myrange = 'A' .. 'Z';
+			input: []token.Token{
+				newToken(token.TYPE, "type"),
+				newToken(token.IDENT, "myrange"),
+				newToken(token.EQUAL, "="),
+				newToken(token.CHAR, "A"),
+				newToken(token.DOTDOT, ".."),
+				newToken(token.CHAR, "Z"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantStmt: &ast.TypeDeclStmt{
+				Token: newToken(token.TYPE, "type"),
+				Definitions: []ast.TypeDefinitionStmt{
+					{
+						Token: newToken(token.IDENT, "myrange"),
+						Identifier: &ast.IdentifierExpr{
+							Token: newToken(token.IDENT, "myrange"),
+							Value: "myrange",
+						},
+						Definition: &ast.SubrangeTypeDefinitionExpr{
+							Token: newToken(token.CHAR, "A"),
+							Left:  newChar('A'),
+							Right: newChar('Z'),
+						},
+					},
+				},
+			},
+		},
+		{
+			// type
+			//   myrange = 0 .. maxint;
+			input: []token.Token{
+				newToken(token.TYPE, "type"),
+				newToken(token.IDENT, "myrange"),
+				newToken(token.EQUAL, "="),
+				newToken(token.NUMBER, "0"),
+				newToken(token.DOTDOT, ".."),
+				newToken(token.IDENT, "maxint"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantStmt: &ast.TypeDeclStmt{
+				Token: newToken(token.TYPE, "type"),
+				Definitions: []ast.TypeDefinitionStmt{
+					{
+						Token:      newToken(token.IDENT, "myrange"),
+						Identifier: newIdent("myrange"),
+						Definition: &ast.SubrangeTypeDefinitionExpr{
+							Token: newToken(token.NUMBER, "0"),
+							Left:  newNumber("0"),
+							Right: newIdent("maxint"),
+						},
+					},
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.TYPE, "type"),
+				newToken(token.IDENT, "myrange"),
+				newToken(token.EQUAL, "="),
+				newToken(token.ARRAY, "array"),
+				newToken(token.LBRACKET, "["),
+				newToken(token.NUMBER, "1"),
+				newToken(token.DOTDOT, ".."),
+				newToken(token.NUMBER, "10"),
+				newToken(token.RBRACKET, "]"),
+				newToken(token.OF, "of"),
+				newToken(token.IDENT, "char"),
+			},
+			wantStmt: &ast.TypeDeclStmt{
+				Token: newToken(token.TYPE, "type"),
+				Definitions: []ast.TypeDefinitionStmt{
+					{
+						Token:      newToken(token.IDENT, "myrange"),
+						Identifier: newIdent("myrange"),
+						Definition: &ast.ArrayTypeDefinitionExpr{
+							Token:  newToken(token.ARRAY, "array"),
+							Packed: false,
+							IndexTypeDef: &ast.SubrangeTypeDefinitionExpr{
+								Token: newToken(token.NUMBER, "1"),
+								Left:  newNumber("1"),
+								Right: newNumber("10"),
+							},
+							ComponentTypeDef: &ast.SimpleTypeDefinitionExpr{
+								Token:      newToken(token.IDENT, "char"),
+								Identifier: newIdent("char"),
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		l := NewTestLexer(tt.input)
 		p := New(l)
 		stmt, err := p.parseTypeDeclStmt()
-		assert.Equal(t, err, tt.wantErr)
+		assert.Equal(t, tt.wantErr, err)
 		if err != nil {
 			continue
 		}
-		assert.Equal(t, stmt, tt.wantStmt)
+		assert.Equal(t, tt.wantStmt, stmt)
 	}
 }

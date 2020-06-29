@@ -74,3 +74,10 @@ func newString(s string) *ast.StringLiteral {
 		Value: s,
 	}
 }
+
+func newChar(c rune) *ast.CharLiteral {
+	return &ast.CharLiteral{
+		Token: newToken(token.CHAR, string(c)),
+		Value: c,
+	}
+}

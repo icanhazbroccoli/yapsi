@@ -73,17 +73,46 @@ func (e *FunctionCallExpr) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitFunctionCallExpr(e)
 }
 
-type TypeDefinitionExpr interface{}
+type TypeDefinitionExprIntf interface{}
 
 type SimpleTypeDefinitionExpr struct {
 	Token      token.Token
-	Identifier *IdentifierExpr
+	Identifier Expression
 }
 
-var _ (Expression) = (*SimpleTypeDefinitionExpr)(nil)
-var _ (TypeDefinitionExpr) = (*SimpleTypeDefinitionExpr)(nil)
+var _ Expression = (*SimpleTypeDefinitionExpr)(nil)
+var _ TypeDefinitionExprIntf = (*SimpleTypeDefinitionExpr)(nil)
 
 func (e *SimpleTypeDefinitionExpr) expressionNode() {}
 func (e *SimpleTypeDefinitionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitSimpleTypeDefinitionExpr(e)
+}
+
+type SubrangeTypeDefinitionExpr struct {
+	Token token.Token
+	Left  Expression
+	Right Expression
+}
+
+var _ Expression = (*SubrangeTypeDefinitionExpr)(nil)
+var _ TypeDefinitionExprIntf = (*SubrangeTypeDefinitionExpr)(nil)
+
+func (e *SubrangeTypeDefinitionExpr) expressionNode() {}
+func (e *SubrangeTypeDefinitionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitSubrangeTypeDefinitionExpr(e)
+}
+
+type ArrayTypeDefinitionExpr struct {
+	Token            token.Token
+	Packed           bool
+	IndexTypeDef     TypeDefinitionExprIntf
+	ComponentTypeDef TypeDefinitionExprIntf
+}
+
+var _ Expression = (*ArrayTypeDefinitionExpr)(nil)
+var _ TypeDefinitionExprIntf = (*ArrayTypeDefinitionExpr)(nil)
+
+func (e *ArrayTypeDefinitionExpr) expressionNode() {}
+func (e *ArrayTypeDefinitionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitArrayTypeDefinitionExpr(e)
 }

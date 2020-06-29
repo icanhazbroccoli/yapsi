@@ -94,26 +94,14 @@ func (p *Parser) parseTypeDeclStmt() (*ast.TypeDeclStmt, error) {
 		Token: p.previous(),
 	}
 	defs := []ast.TypeDefinitionStmt{}
-	var def ast.TypeDefinitionExpr
 	for p.match(token.IDENT) {
 		tok := p.previous()
 		if _, err := p.consume(token.EQUAL); err != nil {
 			return nil, err
 		}
-		if p.match(token.IDENT) {
-			ident := p.previous()
-			def = &ast.SimpleTypeDefinitionExpr{
-				Token: ident,
-				Identifier: &ast.IdentifierExpr{
-					Token: ident,
-					Value: ident.Literal,
-				},
-			}
-		} else {
-			panic("not implemented")
-		}
-		if !p.match(token.SEMICOLON) {
-			break
+		def, err := p.parseTypeDefinitionExpr()
+		if err != nil {
+			return nil, err
 		}
 		defs = append(defs, ast.TypeDefinitionStmt{
 			Token: tok,
@@ -123,9 +111,92 @@ func (p *Parser) parseTypeDeclStmt() (*ast.TypeDeclStmt, error) {
 			},
 			Definition: def,
 		})
+		if !p.match(token.SEMICOLON) {
+			break
+		}
 	}
 	stmt.Definitions = defs
 	return stmt, nil
+}
+
+func (p *Parser) parseTypeDefinitionExpr() (ast.TypeDefinitionExprIntf, error) {
+	if p.match(token.PACKED, token.ARRAY) {
+		// <array type> ::= array [<index type>{,<index type>}] of <component type>
+		packed := false
+		tok := p.previous()
+		if p.previous().Type == token.PACKED {
+			packed = true
+			if _, err := p.consume(token.ARRAY); err != nil {
+				return nil, err
+			}
+		}
+		if _, err := p.consume(token.LBRACKET); err != nil {
+			return nil, err
+		}
+		indexTypeDef, err := p.parseSimpleTypeDefinitionExpr()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := p.consume(token.RBRACKET); err != nil {
+			return nil, err
+		}
+		if _, err := p.consume(token.OF); err != nil {
+			return nil, err
+		}
+		componentTypeDef, err := p.parseTypeDefinitionExpr()
+		if err != nil {
+			return nil, err
+		}
+		return &ast.ArrayTypeDefinitionExpr{
+			Token:            tok,
+			Packed:           packed,
+			IndexTypeDef:     indexTypeDef,
+			ComponentTypeDef: componentTypeDef,
+		}, nil
+	} else if p.match(token.RECORD) {
+		// <record type> ::= record <field list> end
+		// <field list> ::= <fixed part> | <fixed part> ; <variant part> | <variant part>
+		// <fixed part> ::= <record section> {;<record section>}
+		// <record section> ::= <field identifier> {, <field identifier>} : <type> | <empty>
+		panic("record type is not implemented")
+	} else if p.match(token.SET) {
+		// <set type> ::=set of <base type>
+		// <base type> ::= <simple type>
+		panic("set type is not implemented")
+	} else if p.match(token.FILE) {
+		// <file type> ::= file of <type>
+		panic("file type is not implemented")
+	}
+
+	return p.parseSimpleTypeDefinitionExpr()
+}
+
+func (p *Parser) parseSimpleTypeDefinitionExpr() (ast.TypeDefinitionExprIntf, error) {
+	if p.match(token.LPAREN) {
+		// scalar type
+		panic("scalar type is not implemented")
+	}
+	// ident or subrange type
+	left, err := p.parseSimpleExpression()
+	tok := p.previous()
+	if err != nil {
+		return nil, err
+	}
+	if p.match(token.DOTDOT) {
+		right, err := p.parseSimpleExpression()
+		if err != nil {
+			return nil, err
+		}
+		return &ast.SubrangeTypeDefinitionExpr{
+			Token: tok,
+			Left:  left,
+			Right: right,
+		}, nil
+	}
+	return &ast.SimpleTypeDefinitionExpr{
+		Token:      tok,
+		Identifier: left,
+	}, nil
 }
 
 func (p *Parser) parseProcedureAndFunctionDeclStmts() ([]*ast.ProcedureDeclStmt, []*ast.FunctionDeclStmt, error) {
