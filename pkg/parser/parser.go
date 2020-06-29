@@ -355,7 +355,7 @@ func (p *Parser) parseVarDeclStmt() (*ast.VarDeclStmt, error) {
 		return nil, nil
 	}
 	tok := p.previous()
-	mappings := make(map[string]string)
+	mappings := make(map[string]ast.TypeDefinitionExprIntf)
 Decl:
 	for {
 		idents := []string{}
@@ -372,7 +372,7 @@ Decl:
 				return nil, err
 			}
 		}
-		typ, err := p.consume(token.IDENT)
+		typ, err := p.parseTypeDefinitionExpr()
 		if err != nil {
 			return nil, err
 		}
@@ -380,7 +380,7 @@ Decl:
 			if _, ok := mappings[ident]; ok {
 				return nil, fmt.Errorf("Duplicate variable declaration: %s", ident)
 			}
-			mappings[ident] = typ.Literal
+			mappings[ident] = typ
 		}
 		if !p.match(token.SEMICOLON) {
 			break

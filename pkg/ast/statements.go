@@ -154,7 +154,7 @@ func (s *BlockStmt) Visit(v NodeVisitor) (VisitorResult, error) {
 
 type VarDeclStmt struct {
 	Token        token.Token
-	Declarations map[string]string
+	Declarations map[string]TypeDefinitionExprIntf
 }
 
 func (s *VarDeclStmt) statementNode() {}

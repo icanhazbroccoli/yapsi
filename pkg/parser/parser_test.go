@@ -73,111 +73,143 @@ import (
 //		assert.Equal(t, tt.wantParams, params)
 //	}
 //}
-//
-//func TestParseVariables(t *testing.T) {
-//	tests := []struct {
-//		input    []token.Token
-//		wantVars []ast.Variable
-//		wantErr  error
-//	}{
-//		{
-//			input:    []token.Token{},
-//			wantVars: []ast.Variable{},
-//			wantErr:  nil,
-//		},
-//		{
-//			input: []token.Token{
-//				newToken(token.VAR, "var"),
-//				newToken(token.IDENT, "foo"),
-//				newToken(token.COLON, ":"),
-//				newToken(token.IDENT, "bar"),
-//				newToken(token.SEMICOLON, ";"),
-//			},
-//			wantVars: []ast.Variable{
-//				ast.Variable{
-//					Identifier: ast.VarIdentifier("foo"),
-//					Type:       ast.TypeIdentifier("bar"),
-//				},
-//			},
-//			wantErr: nil,
-//		},
-//		{
-//			input: []token.Token{
-//				newToken(token.VAR, "var"),
-//				newToken(token.IDENT, "foo"),
-//				newToken(token.COMMA, ","),
-//				newToken(token.IDENT, "bar"),
-//				newToken(token.COMMA, ","),
-//				newToken(token.IDENT, "baz"),
-//				newToken(token.COLON, ":"),
-//				newToken(token.IDENT, "boo"),
-//				newToken(token.SEMICOLON, ";"),
-//			},
-//			wantVars: []ast.Variable{
-//				ast.Variable{
-//					Identifier: ast.VarIdentifier("foo"),
-//					Type:       ast.TypeIdentifier("boo"),
-//				},
-//				ast.Variable{
-//					Identifier: ast.VarIdentifier("bar"),
-//					Type:       ast.TypeIdentifier("boo"),
-//				},
-//				ast.Variable{
-//					Identifier: ast.VarIdentifier("baz"),
-//					Type:       ast.TypeIdentifier("boo"),
-//				},
-//			},
-//			wantErr: nil,
-//		},
-//		{
-//			input: []token.Token{
-//				newToken(token.VAR, "var"),
-//				newToken(token.IDENT, "foo"),
-//				newToken(token.COMMA, ","),
-//				newToken(token.IDENT, "bar"),
-//				newToken(token.COLON, ":"),
-//				newToken(token.IDENT, "Integer"),
-//				newToken(token.SEMICOLON, ";"),
-//				newToken(token.IDENT, "baz"),
-//				newToken(token.COMMA, ","),
-//				newToken(token.IDENT, "boo"),
-//				newToken(token.COLON, ":"),
-//				newToken(token.IDENT, "Real"),
-//				newToken(token.SEMICOLON, ";"),
-//			},
-//			wantVars: []ast.Variable{
-//				ast.Variable{
-//					Identifier: ast.VarIdentifier("foo"),
-//					Type:       ast.TypeIdentifier("Integer"),
-//				},
-//				ast.Variable{
-//					Identifier: ast.VarIdentifier("bar"),
-//					Type:       ast.TypeIdentifier("Integer"),
-//				},
-//				ast.Variable{
-//					Identifier: ast.VarIdentifier("baz"),
-//					Type:       ast.TypeIdentifier("Real"),
-//				},
-//				ast.Variable{
-//					Identifier: ast.VarIdentifier("boo"),
-//					Type:       ast.TypeIdentifier("Real"),
-//				},
-//			},
-//			wantErr: nil,
-//		},
-//	}
-//
-//	for _, tt := range tests {
-//		l := NewTestLexer(tt.input)
-//		p := New(l)
-//		vars, err := p.parseVariables()
-//		assert.Equal(t, err, tt.wantErr)
-//		if err != nil {
-//			continue
-//		}
-//		assert.Equal(t, vars, tt.wantVars)
-//	}
-//}
+
+func TestParseVarDeclStmt(t *testing.T) {
+	tests := []struct {
+		input    []token.Token
+		wantDecl *ast.VarDeclStmt
+		wantErr  error
+	}{
+		{
+			input:    []token.Token{},
+			wantDecl: nil,
+			wantErr:  nil,
+		},
+		{
+			input: []token.Token{
+				newToken(token.VAR, "var"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.COLON, ":"),
+				newToken(token.IDENT, "bar"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantDecl: &ast.VarDeclStmt{
+				Token: newToken(token.VAR, "var"),
+				Declarations: map[string]ast.TypeDefinitionExprIntf{
+					"foo": &ast.SimpleTypeDefinitionExpr{
+						Token:      newToken(token.IDENT, "bar"),
+						Identifier: newIdent("bar"),
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			input: []token.Token{
+				newToken(token.VAR, "var"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.COLON, ":"),
+				newToken(token.NUMBER, "0"),
+				newToken(token.DOTDOT, ".."),
+				newToken(token.NUMBER, "10"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantDecl: &ast.VarDeclStmt{
+				Token: newToken(token.VAR, "var"),
+				Declarations: map[string]ast.TypeDefinitionExprIntf{
+					"foo": &ast.SubrangeTypeDefinitionExpr{
+						Token: newToken(token.NUMBER, "0"),
+						Left:  newNumber("0"),
+						Right: newNumber("10"),
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			input: []token.Token{
+				newToken(token.VAR, "var"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "bar"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "baz"),
+				newToken(token.COLON, ":"),
+				newToken(token.IDENT, "boo"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantDecl: &ast.VarDeclStmt{
+				Token: newToken(token.VAR, "var"),
+				Declarations: map[string]ast.TypeDefinitionExprIntf{
+					"foo": &ast.SimpleTypeDefinitionExpr{
+						Token:      newToken(token.IDENT, "boo"),
+						Identifier: newIdent("boo"),
+					},
+					"bar": &ast.SimpleTypeDefinitionExpr{
+						Token:      newToken(token.IDENT, "boo"),
+						Identifier: newIdent("boo"),
+					},
+					"baz": &ast.SimpleTypeDefinitionExpr{
+						Token:      newToken(token.IDENT, "boo"),
+						Identifier: newIdent("boo"),
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			input: []token.Token{
+				newToken(token.VAR, "var"),
+				newToken(token.IDENT, "foo"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "bar"),
+				newToken(token.COLON, ":"),
+				newToken(token.IDENT, "Integer"),
+				newToken(token.SEMICOLON, ";"),
+				newToken(token.IDENT, "baz"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "boo"),
+				newToken(token.COLON, ":"),
+				newToken(token.IDENT, "Real"),
+				newToken(token.SEMICOLON, ";"),
+			},
+			wantDecl: &ast.VarDeclStmt{
+				Token: newToken(token.VAR, "var"),
+				Declarations: map[string]ast.TypeDefinitionExprIntf{
+					"foo": &ast.SimpleTypeDefinitionExpr{
+						Token:      newToken(token.IDENT, "Integer"),
+						Identifier: newIdent("Integer"),
+					},
+					"bar": &ast.SimpleTypeDefinitionExpr{
+						Token:      newToken(token.IDENT, "Integer"),
+						Identifier: newIdent("Integer"),
+					},
+					"baz": &ast.SimpleTypeDefinitionExpr{
+						Token:      newToken(token.IDENT, "Real"),
+						Identifier: newIdent("Real"),
+					},
+					"boo": &ast.SimpleTypeDefinitionExpr{
+						Token:      newToken(token.IDENT, "Real"),
+						Identifier: newIdent("Real"),
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		l := NewTestLexer(tt.input)
+		p := New(l)
+		decl, err := p.parseVarDeclStmt()
+		assert.Equal(t, tt.wantErr, err)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, tt.wantDecl, decl)
+	}
+}
+
 //
 //func TestParseLabels(t *testing.T) {
 //	tests := []struct {
@@ -1016,6 +1048,8 @@ func TestTypeDeclStmt(t *testing.T) {
 			},
 		},
 		{
+			// type
+			//   myrange = array[1 .. 10] of char
 			input: []token.Token{
 				newToken(token.TYPE, "type"),
 				newToken(token.IDENT, "myrange"),
