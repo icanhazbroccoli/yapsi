@@ -129,3 +129,16 @@ func (e *RecordTypeDefinitionExpr) expressionNode() {}
 func (e *RecordTypeDefinitionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitRecordTypeDefinitionExpr(e)
 }
+
+type EnumTypeDefinitionExpr struct {
+	Token  token.Token
+	Values []*IdentifierExpr
+}
+
+var _ Expression = (*EnumTypeDefinitionExpr)(nil)
+var _ TypeDefinitionExprIntf = (*EnumTypeDefinitionExpr)(nil)
+
+func (e *EnumTypeDefinitionExpr) expressionNode() {}
+func (e *EnumTypeDefinitionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitEnumTypeDefinitionExpr(e)
+}

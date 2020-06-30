@@ -1149,6 +1149,40 @@ func TestTypeDeclStmt(t *testing.T) {
 				},
 			},
 		},
+		{
+			input: []token.Token{
+				newToken(token.TYPE, "type"),
+				newToken(token.IDENT, "transaction"),
+				newToken(token.EQUAL, "="),
+				newToken(token.LPAREN, "("),
+				newToken(token.IDENT, "addition"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "deletion"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "enquiry"),
+				newToken(token.COMMA, ","),
+				newToken(token.IDENT, "update"),
+				newToken(token.RPAREN, ")"),
+			},
+			wantStmt: &ast.TypeDeclStmt{
+				Token: newToken(token.TYPE, "type"),
+				Definitions: []ast.TypeDefinitionStmt{
+					{
+						Token:      newToken(token.IDENT, "transaction"),
+						Identifier: newIdent("transaction"),
+						Definition: &ast.EnumTypeDefinitionExpr{
+							Token: newToken(token.LPAREN, "("),
+							Values: []*ast.IdentifierExpr{
+								newIdent("addition"),
+								newIdent("deletion"),
+								newIdent("enquiry"),
+								newIdent("update"),
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

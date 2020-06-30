@@ -211,7 +211,23 @@ func (p *Parser) parseTypeDefinitionExpr() (ast.TypeDefinitionExprIntf, error) {
 func (p *Parser) parseSimpleTypeDefinitionExpr() (ast.TypeDefinitionExprIntf, error) {
 	if p.match(token.LPAREN) {
 		// scalar type
-		panic("scalar type is not implemented")
+		tok := p.previous()
+		values := []*ast.IdentifierExpr{}
+		for p.match(token.IDENT) {
+			vtok := p.previous()
+			val := &ast.IdentifierExpr{
+				Token: vtok,
+				Value: vtok.Literal,
+			}
+			values = append(values, val)
+			if !p.match(token.COMMA) {
+				break
+			}
+		}
+		return &ast.EnumTypeDefinitionExpr{
+			Token:  tok,
+			Values: values,
+		}, nil
 	}
 	// ident or subrange type
 	left, err := p.parseSimpleExpression()
