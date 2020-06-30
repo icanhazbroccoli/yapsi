@@ -1052,7 +1052,7 @@ func TestTypeDeclStmt(t *testing.T) {
 			//   myrange = array[1 .. 10] of char
 			input: []token.Token{
 				newToken(token.TYPE, "type"),
-				newToken(token.IDENT, "myrange"),
+				newToken(token.IDENT, "myarr"),
 				newToken(token.EQUAL, "="),
 				newToken(token.ARRAY, "array"),
 				newToken(token.LBRACKET, "["),
@@ -1067,8 +1067,8 @@ func TestTypeDeclStmt(t *testing.T) {
 				Token: newToken(token.TYPE, "type"),
 				Definitions: []ast.TypeDefinitionStmt{
 					{
-						Token:      newToken(token.IDENT, "myrange"),
-						Identifier: newIdent("myrange"),
+						Token:      newToken(token.IDENT, "myarr"),
+						Identifier: newIdent("myarr"),
 						Definition: &ast.ArrayTypeDefinitionExpr{
 							Token:  newToken(token.ARRAY, "array"),
 							Packed: false,
@@ -1080,6 +1080,69 @@ func TestTypeDeclStmt(t *testing.T) {
 							ComponentTypeDef: &ast.SimpleTypeDefinitionExpr{
 								Token:      newToken(token.IDENT, "char"),
 								Identifier: newIdent("char"),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.TYPE, "type"),
+				newToken(token.IDENT, "myrec"),
+				newToken(token.EQUAL, "="),
+				newToken(token.RECORD, "record"),
+				newToken(token.IDENT, "account"),
+				newToken(token.COLON, ":"),
+				newToken(token.IDENT, "integer"),
+				newToken(token.SEMICOLON, ";"),
+				newToken(token.IDENT, "name"),
+				newToken(token.COLON, ":"),
+				newToken(token.PACKED, "packed"),
+				newToken(token.ARRAY, "array"),
+				newToken(token.LBRACKET, "["),
+				newToken(token.NUMBER, "1"),
+				newToken(token.DOTDOT, ".."),
+				newToken(token.NUMBER, "20"),
+				newToken(token.RBRACKET, "]"),
+				newToken(token.OF, "of"),
+				newToken(token.IDENT, "char"),
+				newToken(token.END, "end"),
+			},
+			wantStmt: &ast.TypeDeclStmt{
+				Token: newToken(token.TYPE, "type"),
+				Definitions: []ast.TypeDefinitionStmt{
+					{
+						Token:      newToken(token.IDENT, "myrec"),
+						Identifier: newIdent("myrec"),
+						Definition: &ast.RecordTypeDefinitionExpr{
+							Token: newToken(token.RECORD, "record"),
+							Fields: []ast.TypeDefinitionStmt{
+								{
+									Token:      newToken(token.IDENT, "account"),
+									Identifier: newIdent("account"),
+									Definition: &ast.SimpleTypeDefinitionExpr{
+										Token:      newToken(token.IDENT, "integer"),
+										Identifier: newIdent("integer"),
+									},
+								},
+								{
+									Token:      newToken(token.IDENT, "name"),
+									Identifier: newIdent("name"),
+									Definition: &ast.ArrayTypeDefinitionExpr{
+										Token:  newToken(token.PACKED, "packed"),
+										Packed: true,
+										IndexTypeDef: &ast.SubrangeTypeDefinitionExpr{
+											Token: newToken(token.NUMBER, "1"),
+											Left:  newNumber("1"),
+											Right: newNumber("20"),
+										},
+										ComponentTypeDef: &ast.SimpleTypeDefinitionExpr{
+											Token:      newToken(token.IDENT, "char"),
+											Identifier: newIdent("char"),
+										},
+									},
+								},
 							},
 						},
 					},

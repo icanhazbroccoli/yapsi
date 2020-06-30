@@ -116,3 +116,16 @@ func (e *ArrayTypeDefinitionExpr) expressionNode() {}
 func (e *ArrayTypeDefinitionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitArrayTypeDefinitionExpr(e)
 }
+
+type RecordTypeDefinitionExpr struct {
+	Token  token.Token
+	Fields []TypeDefinitionStmt
+}
+
+var _ Expression = (*RecordTypeDefinitionExpr)(nil)
+var _ TypeDefinitionExprIntf = (*RecordTypeDefinitionExpr)(nil)
+
+func (e *RecordTypeDefinitionExpr) expressionNode() {}
+func (e *RecordTypeDefinitionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitRecordTypeDefinitionExpr(e)
+}

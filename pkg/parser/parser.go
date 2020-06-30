@@ -93,6 +93,15 @@ func (p *Parser) parseTypeDeclStmt() (*ast.TypeDeclStmt, error) {
 	stmt := &ast.TypeDeclStmt{
 		Token: p.previous(),
 	}
+	defs, err := p.parseTypeDefinitionStmts()
+	if err != nil {
+		return nil, err
+	}
+	stmt.Definitions = defs
+	return stmt, nil
+}
+
+func (p *Parser) parseTypeDefinitionStmts() ([]ast.TypeDefinitionStmt, error) {
 	defs := []ast.TypeDefinitionStmt{}
 	for p.match(token.IDENT) {
 		tok := p.previous()
@@ -115,8 +124,7 @@ func (p *Parser) parseTypeDeclStmt() (*ast.TypeDeclStmt, error) {
 			break
 		}
 	}
-	stmt.Definitions = defs
-	return stmt, nil
+	return defs, nil
 }
 
 func (p *Parser) parseTypeDefinitionExpr() (ast.TypeDefinitionExprIntf, error) {
@@ -158,7 +166,36 @@ func (p *Parser) parseTypeDefinitionExpr() (ast.TypeDefinitionExprIntf, error) {
 		// <field list> ::= <fixed part> | <fixed part> ; <variant part> | <variant part>
 		// <fixed part> ::= <record section> {;<record section>}
 		// <record section> ::= <field identifier> {, <field identifier>} : <type> | <empty>
-		panic("record type is not implemented")
+		tok := p.previous()
+		defs := []ast.TypeDefinitionStmt{}
+		for p.match(token.IDENT) {
+			tok := p.previous()
+			if _, err := p.consume(token.COLON); err != nil {
+				return nil, err
+			}
+			def, err := p.parseTypeDefinitionExpr()
+			if err != nil {
+				return nil, err
+			}
+			defs = append(defs, ast.TypeDefinitionStmt{
+				Token: tok,
+				Identifier: &ast.IdentifierExpr{
+					Token: tok,
+					Value: tok.Literal,
+				},
+				Definition: def,
+			})
+			if !p.match(token.SEMICOLON) {
+				break
+			}
+		}
+		if _, err := p.consume(token.END); err != nil {
+			return nil, err
+		}
+		return &ast.RecordTypeDefinitionExpr{
+			Token:  tok,
+			Fields: defs,
+		}, nil
 	} else if p.match(token.SET) {
 		// <set type> ::=set of <base type>
 		// <base type> ::= <simple type>

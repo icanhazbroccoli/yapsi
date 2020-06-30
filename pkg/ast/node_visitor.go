@@ -17,6 +17,7 @@ type NodeVisitor interface {
 	VisitSimpleTypeDefinitionExpr(*SimpleTypeDefinitionExpr) (VisitorResult, error)
 	VisitSubrangeTypeDefinitionExpr(*SubrangeTypeDefinitionExpr) (VisitorResult, error)
 	VisitArrayTypeDefinitionExpr(*ArrayTypeDefinitionExpr) (VisitorResult, error)
+	VisitRecordTypeDefinitionExpr(*RecordTypeDefinitionExpr) (VisitorResult, error)
 
 	VisitProgramStmt(*ProgramStmt) (VisitorResult, error)
 	VisitBlockStmt(*BlockStmt) (VisitorResult, error)
