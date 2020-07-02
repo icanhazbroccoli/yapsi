@@ -1183,6 +1183,109 @@ func TestTypeDeclStmt(t *testing.T) {
 				},
 			},
 		},
+		{
+			input: []token.Token{
+				newToken(token.TYPE, "type"),
+				newToken(token.IDENT, "myset"),
+				newToken(token.EQUAL, "="),
+				newToken(token.SET, "set"),
+				newToken(token.OF, "of"),
+				newToken(token.CHAR, "A"),
+				newToken(token.DOTDOT, ".."),
+				newToken(token.CHAR, "Z"),
+			},
+			wantStmt: &ast.TypeDeclStmt{
+				Token: newToken(token.TYPE, "type"),
+				Definitions: []ast.TypeDefinitionStmt{
+					{
+						Token:      newToken(token.IDENT, "myset"),
+						Identifier: newIdent("myset"),
+						Definition: &ast.SetTypeDefinitionExpr{
+							Token: newToken(token.SET, "set"),
+							BaseTypeDef: &ast.SubrangeTypeDefinitionExpr{
+								Token: newToken(token.CHAR, "A"),
+								Left: &ast.CharLiteral{
+									Token: newToken(token.CHAR, "A"),
+									Value: 'A',
+								},
+								Right: &ast.CharLiteral{
+									Token: newToken(token.CHAR, "Z"),
+									Value: 'Z',
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			input: []token.Token{
+				newToken(token.TYPE, "type"),
+				newToken(token.IDENT, "myfile"),
+				newToken(token.EQUAL, "="),
+				newToken(token.FILE, "file"),
+				newToken(token.OF, "of"),
+				newToken(token.RECORD, "record"),
+				newToken(token.IDENT, "id"),
+				newToken(token.COLON, ":"),
+				newToken(token.IDENT, "integer"),
+				newToken(token.SEMICOLON, ";"),
+				newToken(token.IDENT, "name"),
+				newToken(token.COLON, ":"),
+				newToken(token.PACKED, "packed"),
+				newToken(token.ARRAY, "array"),
+				newToken(token.LBRACKET, "["),
+				newToken(token.NUMBER, "1"),
+				newToken(token.DOTDOT, ".."),
+				newToken(token.NUMBER, "20"),
+				newToken(token.RBRACKET, "]"),
+				newToken(token.OF, "of"),
+				newToken(token.IDENT, "char"),
+				newToken(token.END, "end"),
+			},
+			wantStmt: &ast.TypeDeclStmt{
+				Token: newToken(token.TYPE, "type"),
+				Definitions: []ast.TypeDefinitionStmt{
+					{
+						Token:      newToken(token.IDENT, "myfile"),
+						Identifier: newIdent("myfile"),
+						Definition: &ast.FileTypeDefinitionExpr{
+							Token: newToken(token.FILE, "file"),
+							BaseTypeDef: &ast.RecordTypeDefinitionExpr{
+								Token: newToken(token.RECORD, "record"),
+								Fields: []ast.TypeDefinitionStmt{
+									{
+										Token:      newToken(token.IDENT, "id"),
+										Identifier: newIdent("id"),
+										Definition: &ast.SimpleTypeDefinitionExpr{
+											Token:      newToken(token.IDENT, "integer"),
+											Identifier: newIdent("integer"),
+										},
+									},
+									{
+										Token:      newToken(token.IDENT, "name"),
+										Identifier: newIdent("name"),
+										Definition: &ast.ArrayTypeDefinitionExpr{
+											Token:  newToken(token.PACKED, "packed"),
+											Packed: true,
+											IndexTypeDef: &ast.SubrangeTypeDefinitionExpr{
+												Token: newToken(token.NUMBER, "1"),
+												Left:  newNumber("1"),
+												Right: newNumber("20"),
+											},
+											ComponentTypeDef: &ast.SimpleTypeDefinitionExpr{
+												Token:      newToken(token.IDENT, "char"),
+												Identifier: newIdent("char"),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

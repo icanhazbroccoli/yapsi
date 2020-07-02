@@ -19,6 +19,8 @@ type NodeVisitor interface {
 	VisitArrayTypeDefinitionExpr(*ArrayTypeDefinitionExpr) (VisitorResult, error)
 	VisitRecordTypeDefinitionExpr(*RecordTypeDefinitionExpr) (VisitorResult, error)
 	VisitEnumTypeDefinitionExpr(*EnumTypeDefinitionExpr) (VisitorResult, error)
+	VisitSetTypeDefinitionExpr(*SetTypeDefinitionExpr) (VisitorResult, error)
+	VisitFileTypeDefinitionExpr(*FileTypeDefinitionExpr) (VisitorResult, error)
 
 	VisitProgramStmt(*ProgramStmt) (VisitorResult, error)
 	VisitBlockStmt(*BlockStmt) (VisitorResult, error)

@@ -199,10 +199,32 @@ func (p *Parser) parseTypeDefinitionExpr() (ast.TypeDefinitionExprIntf, error) {
 	} else if p.match(token.SET) {
 		// <set type> ::=set of <base type>
 		// <base type> ::= <simple type>
-		panic("set type is not implemented")
+		tok := p.previous()
+		if _, err := p.consume(token.OF); err != nil {
+			return nil, err
+		}
+		baseType, err := p.parseSimpleTypeDefinitionExpr()
+		if err != nil {
+			return nil, err
+		}
+		return &ast.SetTypeDefinitionExpr{
+			Token:       tok,
+			BaseTypeDef: baseType,
+		}, nil
 	} else if p.match(token.FILE) {
 		// <file type> ::= file of <type>
-		panic("file type is not implemented")
+		tok := p.previous()
+		if _, err := p.consume(token.OF); err != nil {
+			return nil, err
+		}
+		baseType, err := p.parseTypeDefinitionExpr()
+		if err != nil {
+			return nil, err
+		}
+		return &ast.FileTypeDefinitionExpr{
+			Token:       tok,
+			BaseTypeDef: baseType,
+		}, nil
 	}
 
 	return p.parseSimpleTypeDefinitionExpr()

@@ -142,3 +142,29 @@ func (e *EnumTypeDefinitionExpr) expressionNode() {}
 func (e *EnumTypeDefinitionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
 	return v.VisitEnumTypeDefinitionExpr(e)
 }
+
+type SetTypeDefinitionExpr struct {
+	Token       token.Token
+	BaseTypeDef TypeDefinitionExprIntf
+}
+
+var _ Expression = (*SetTypeDefinitionExpr)(nil)
+var _ TypeDefinitionExprIntf = (*SetTypeDefinitionExpr)(nil)
+
+func (e *SetTypeDefinitionExpr) expressionNode() {}
+func (e *SetTypeDefinitionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitSetTypeDefinitionExpr(e)
+}
+
+type FileTypeDefinitionExpr struct {
+	Token       token.Token
+	BaseTypeDef TypeDefinitionExprIntf
+}
+
+var _ Expression = (*FileTypeDefinitionExpr)(nil)
+var _ TypeDefinitionExprIntf = (*FileTypeDefinitionExpr)(nil)
+
+func (e *FileTypeDefinitionExpr) expressionNode() {}
+func (e *FileTypeDefinitionExpr) Visit(v NodeVisitor) (VisitorResult, error) {
+	return v.VisitFileTypeDefinitionExpr(e)
+}
