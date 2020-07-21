@@ -3,16 +3,16 @@ package types
 import "fmt"
 
 type Registry struct {
-	types map[TypeName]*Type
+	types map[TypeName]Type
 }
 
 func NewRegistry() *Registry {
 	return &Registry{
-		types: make(map[TypeName]*Type),
+		types: make(map[TypeName]Type),
 	}
 }
 
-func (tr *Registry) Register(name TypeName, t *Type) error {
+func (tr *Registry) Register(name TypeName, t Type) error {
 	if _, ok := tr.types[name]; ok {
 		return duplicateTypeDefErr(name)
 	}
@@ -20,7 +20,7 @@ func (tr *Registry) Register(name TypeName, t *Type) error {
 	return nil
 }
 
-func (tr *Registry) Lookup(name TypeName) (*Type, bool) {
+func (tr *Registry) Lookup(name TypeName) (Type, bool) {
 	t, ok := tr.types[name]
 	return t, ok
 }

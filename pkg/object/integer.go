@@ -13,7 +13,7 @@ type Integer struct {
 var _ Arithmetic = (*Integer)(nil)
 var _ Comparable = (*Integer)(nil)
 
-func (i *Integer) Type() *types.Type { return types.Int }
+func (i *Integer) Type() types.Type { return types.Int }
 
 func (i *Integer) String() string { return fmt.Sprintf("%d", i.Value) }
 

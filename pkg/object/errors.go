@@ -16,7 +16,7 @@ func WrongOperandTypErr(o1, o2 Any, opName string) error {
 		o1.Type(), opName, o2.Type())
 }
 
-func UnsupTypOpErr(t *types.Type, op string) error {
+func UnsupTypOpErr(t types.Type, op string) error {
 	return fmt.Errorf("Unsupported operator for type: %v", t.Name())
 }
 
@@ -28,11 +28,11 @@ func arrWrongRangeConstraintErr(l, r Arithmetic) error {
 	return fmt.Errorf("Array range constraint is wrong: Left: %v, Right: %v", l, r)
 }
 
-func arrWrongIndexTypeErr(gotType, wantType *types.Type) error {
+func arrWrongIndexTypeErr(gotType, wantType types.Type) error {
 	return fmt.Errorf("Wrong array indexing type provided: got: %s, want: %s",
 		gotType.Name(), wantType.Name())
 }
 
-func arrUnprocessableIndexTypeErr(t *types.Type) error {
+func arrUnprocessableIndexTypeErr(t types.Type) error {
 	return fmt.Errorf("Array indexing failed for index type: %s", t.Name())
 }

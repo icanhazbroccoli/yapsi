@@ -10,15 +10,15 @@ import (
 
 type Function struct {
 	Identifier string
-	ReturnType *types.Type
+	ReturnType types.Type
 	Params     []*Variable
 	Body       *ast.BlockStmt
 }
 
 var _ (Any) = (*Function)(nil)
 
-func (f *Function) Type() *types.Type { return types.Function }
-func (f *Function) Arity() int        { return len(f.Params) }
+func (f *Function) Type() types.Type { return types.Function }
+func (f *Function) Arity() int       { return len(f.Params) }
 
 func (f *Function) String() string {
 	var out bytes.Buffer

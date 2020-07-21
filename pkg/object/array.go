@@ -8,14 +8,14 @@ import (
 
 type Array struct {
 	left, right Arithmetic
-	it, ct      *types.Type
+	it, ct      types.Type
 	values      []Any
 }
 
 var _ Indexable = (*Array)(nil)
 
-func (a *Array) Type() *types.Type { return types.Array }
-func (a *Array) Len() int          { return len(a.values) }
+func (a *Array) Type() types.Type { return types.Array }
+func (a *Array) Len() int         { return len(a.values) }
 
 func (a *Array) String() string {
 	chunks := make([]string, 0, len(a.values))
@@ -25,7 +25,7 @@ func (a *Array) String() string {
 	return "[" + strings.Join(chunks, ", ") + "]"
 }
 
-func NewArray(l, r Arithmetic, it, ct *types.Type) (*Array, error) {
+func NewArray(l, r Arithmetic, it, ct types.Type) (*Array, error) {
 	a := &Array{
 		left:  l,
 		right: r,

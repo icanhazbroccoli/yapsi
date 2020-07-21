@@ -77,7 +77,7 @@ type TypeDefinitionExprIntf interface{}
 
 type SimpleTypeDefinitionExpr struct {
 	Token      token.Token
-	Identifier Expression
+	Identifier *IdentifierExpr
 }
 
 var _ Expression = (*SimpleTypeDefinitionExpr)(nil)

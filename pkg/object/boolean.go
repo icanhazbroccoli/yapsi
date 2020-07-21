@@ -12,7 +12,7 @@ type Boolean struct {
 
 var _ Logical = (*Boolean)(nil)
 
-func (b *Boolean) Type() *types.Type { return types.Bool }
+func (b *Boolean) Type() types.Type { return types.Bool }
 
 func (b *Boolean) String() string {
 	return fmt.Sprintf("%t", b.Value)

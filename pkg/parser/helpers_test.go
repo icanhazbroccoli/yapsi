@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"yapsi/pkg/ast"
 	"yapsi/pkg/lexer"
 	"yapsi/pkg/token"
 )
@@ -32,52 +31,4 @@ func (l *TestLexer) NextToken() token.Token {
 
 func (l *TestLexer) Pos() (int, int) {
 	return 0, l.cur
-}
-
-func newToken(t token.TokenType, l string) token.Token {
-	return token.Token{
-		Type:    t,
-		Literal: l,
-	}
-}
-
-func newNumber(num string) *ast.NumericLiteral {
-	return &ast.NumericLiteral{
-		Token: newToken(token.NUMBER, num),
-		Value: ast.RawNumber(num),
-	}
-}
-
-func newIdent(ident string) *ast.IdentifierExpr {
-	return &ast.IdentifierExpr{
-		Token: newToken(token.IDENT, ident),
-		Value: ident,
-	}
-}
-
-func newBool(val bool) *ast.BoolLiteral {
-	if val {
-		return &ast.BoolLiteral{
-			Token: newToken(token.TRUE, "true"),
-			Value: true,
-		}
-	}
-	return &ast.BoolLiteral{
-		Token: newToken(token.FALSE, "false"),
-		Value: false,
-	}
-}
-
-func newString(s string) *ast.StringLiteral {
-	return &ast.StringLiteral{
-		Token: newToken(token.STRING, s),
-		Value: s,
-	}
-}
-
-func newChar(c rune) *ast.CharLiteral {
-	return &ast.CharLiteral{
-		Token: newToken(token.CHAR, string(c)),
-		Value: c,
-	}
 }

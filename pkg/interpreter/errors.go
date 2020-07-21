@@ -15,7 +15,7 @@ func unsupportedUnaryOpErr(op string) error {
 	return fmt.Errorf("Unsupported operator: %q", op)
 }
 
-func unsupportedBinaryOpErr(op string, t1, t2 *types.Type) error {
+func unsupportedBinaryOpErr(op string, t1, t2 types.Type) error {
 	return fmt.Errorf("Unsupported operator: %s %s %s",
 		t1.Name(), op, t2.Name())
 }
@@ -43,4 +43,8 @@ func wrongCallableArgLenErr(exp, got int) error {
 
 func callableErr(ident string, err error) error {
 	return fmt.Errorf("Failed to call `%s`: %s", ident, err)
+}
+
+func undefinedRefTypeErr(ident string) error {
+	return fmt.Errorf("Undefined type reference: %s", ident)
 }

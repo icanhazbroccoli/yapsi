@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"yapsi/pkg/ast"
+	test_helper "yapsi/pkg/internal/test"
 	"yapsi/pkg/object"
 	"yapsi/pkg/token"
 )
@@ -115,5 +116,36 @@ func TestVisitBoolLiteral(t *testing.T) {
 			continue
 		}
 		assert.Equal(t, tt.wantRes, res)
+	}
+}
+
+func TestVisitSimpleTypeDefinitionExpr(t *testing.T) {
+	tests := []struct {
+		input   *ast.SimpleTypeDefinitionExpr
+		wantRes ast.VisitorResult
+		wantErr error
+	}{
+		{
+			input: &ast.SimpleTypeDefinitionExpr{
+				Token: test_helper.NewToken(token.IDENT, "integer"),
+				Identifier: &ast.IdentifierExpr{
+					Token: test_helper.NewToken(token.IDENT, "integer"),
+					Value: "integer",
+				},
+			},
+			wantRes: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		env := object.NewEnvironment(nil)
+		i := &Interpreter{env}
+		res, err := i.VisitSimpleTypeDefinitionExpr(tt.input)
+		assert.Equal(t, tt.wantErr, err)
+		if err != nil {
+			continue
+		}
+		assert.Equal(t, tt.wantRes, res)
+		//TODO: check env
 	}
 }

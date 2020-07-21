@@ -19,7 +19,7 @@ func NewEnvironment(super *Environment) *Environment {
 	}
 }
 
-func (e *Environment) LookupType(name types.TypeName) (*types.Type, bool) {
+func (e *Environment) LookupType(name types.TypeName) (types.Type, bool) {
 	ptr := e
 	for ptr != nil {
 		if typ, ok := ptr.types.Lookup(name); ok {
@@ -30,7 +30,7 @@ func (e *Environment) LookupType(name types.TypeName) (*types.Type, bool) {
 	return nil, false
 }
 
-func (e *Environment) DeclareType(name types.TypeName, t *types.Type) error {
+func (e *Environment) DeclareType(name types.TypeName, t types.Type) error {
 	if err := e.types.Register(name, t); err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (e *Environment) LookupVar(name VarName) (Any, bool) {
 	return nil, false
 }
 
-func (e *Environment) DeclareVar(name VarName, t *types.Type) error {
+func (e *Environment) DeclareVar(name VarName, t types.Type) error {
 	if _, ok := e.vars[name]; ok {
 		return fmt.Errorf("Duplicate variable declaration: %s", name)
 	}

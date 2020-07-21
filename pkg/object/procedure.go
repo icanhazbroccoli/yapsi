@@ -16,8 +16,8 @@ type Procedure struct {
 
 var _ (Any) = (*Function)(nil)
 
-func (p *Procedure) Type() *types.Type { return types.Procedure }
-func (p *Procedure) Arity() int        { return len(p.Params) }
+func (p *Procedure) Type() types.Type { return types.Procedure }
+func (p *Procedure) Arity() int       { return len(p.Params) }
 
 func (p *Procedure) String() string {
 	var out bytes.Buffer

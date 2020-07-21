@@ -9,7 +9,7 @@ type Character struct {
 var _ (Arithmetic) = (*Character)(nil)
 var _ (Comparable) = (*Character)(nil)
 
-func (c *Character) Type() *types.Type { return types.Char }
+func (c *Character) Type() types.Type { return types.Char }
 
 func (c *Character) String() string { return string([]rune{c.Value}) }
 

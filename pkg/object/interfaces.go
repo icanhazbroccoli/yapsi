@@ -3,7 +3,7 @@ package object
 import "yapsi/pkg/types"
 
 type Any interface {
-	Type() *types.Type
+	Type() types.Type
 	String() string
 }
 
@@ -32,7 +32,7 @@ type Callable interface {
 	Any
 	Arity() int
 	IsVariadic() bool
-	Returns() *types.Type
+	Returns() types.Type
 	Call(*Environment, ...Any) error
 	CallReturn(*Environment, ...Any) (Any, error)
 }

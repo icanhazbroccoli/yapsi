@@ -413,7 +413,7 @@ func (i *Interpreter) VisitRepeatStmt(node *ast.RepeatStmt) (ast.VisitorResult, 
 
 func (i *Interpreter) VisitVarDeclStmt(node *ast.VarDeclStmt) (ast.VisitorResult, error) {
 	for ident, typ := range node.Declarations {
-		t, ok := i.env.LookupType(types.TypeName(typ))
+		t, ok := i.env.LookupType(types.TypeName(ident))
 		if !ok {
 			return nil, fmt.Errorf("Undeclared type: %s", typ)
 		}
@@ -482,6 +482,47 @@ func (i *Interpreter) VisitProcedureDeclStmt(node *ast.ProcedureDeclStmt) (ast.V
 		return nil, err
 	}
 	return nil, nil
+}
+
+func (i *Interpreter) VisitSimpleTypeDefinitionExpr(node *ast.SimpleTypeDefinitionExpr) (ast.VisitorResult, error) {
+	ident := node.Identifier.Value
+	typ, ok := i.env.LookupType(types.TypeName(ident))
+	if !ok {
+		return nil, undefinedRefTypeErr(ident)
+	}
+	return typ, nil
+}
+
+func (i *Interpreter) VisitSubrangeTypeDefinitionExpr(*ast.SubrangeTypeDefinitionExpr) (ast.VisitorResult, error) {
+	panic("not implemented")
+}
+
+func (i *Interpreter) VisitArrayTypeDefinitionExpr(*ast.ArrayTypeDefinitionExpr) (ast.VisitorResult, error) {
+	panic("not implemented")
+}
+
+func (i *Interpreter) VisitRecordTypeDefinitionExpr(*ast.RecordTypeDefinitionExpr) (ast.VisitorResult, error) {
+	panic("not implemented")
+}
+
+func (i *Interpreter) VisitEnumTypeDefinitionExpr(*ast.EnumTypeDefinitionExpr) (ast.VisitorResult, error) {
+	panic("not implemented")
+}
+
+func (i *Interpreter) VisitSetTypeDefinitionExpr(*ast.SetTypeDefinitionExpr) (ast.VisitorResult, error) {
+	panic("not implemented")
+}
+
+func (i *Interpreter) VisitFileTypeDefinitionExpr(*ast.FileTypeDefinitionExpr) (ast.VisitorResult, error) {
+	panic("not implemented")
+}
+
+func (i *Interpreter) VisitTypeDeclStmt(*ast.TypeDeclStmt) (ast.VisitorResult, error) {
+	panic("not implemented")
+}
+
+func (i *Interpreter) VisitTypeDefinitionStmt(*ast.TypeDefinitionStmt) (ast.VisitorResult, error) {
+	panic("not implemented")
 }
 
 func declareBaseTypes(env *object.Environment) {

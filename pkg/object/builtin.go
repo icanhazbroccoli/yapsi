@@ -11,13 +11,13 @@ type BuiltinBody func(*Environment, ...Any) (Any, error)
 type Builtin struct {
 	params   []*Variable
 	variadic bool
-	returns  *types.Type
+	returns  types.Type
 	body     BuiltinBody
 }
 
 var _ Callable = (*Builtin)(nil)
 
-func NewBuiltin(params []*Variable, variadic bool, returns *types.Type, body BuiltinBody) *Builtin {
+func NewBuiltin(params []*Variable, variadic bool, returns types.Type, body BuiltinBody) *Builtin {
 	return &Builtin{
 		params:   params,
 		variadic: variadic,
@@ -26,11 +26,11 @@ func NewBuiltin(params []*Variable, variadic bool, returns *types.Type, body Bui
 	}
 }
 
-func (f *Builtin) Type() *types.Type    { return types.Builtin }
-func (f *Builtin) Arity() int           { return len(f.params) }
-func (f *Builtin) IsVariadic() bool     { return f.variadic }
-func (f *Builtin) Returns() *types.Type { return f.returns }
-func (f *Builtin) String() string       { return "(function)" }
+func (f *Builtin) Type() types.Type    { return types.Builtin }
+func (f *Builtin) Arity() int          { return len(f.params) }
+func (f *Builtin) IsVariadic() bool    { return f.variadic }
+func (f *Builtin) Returns() types.Type { return f.returns }
+func (f *Builtin) String() string      { return "(function)" }
 
 func (f *Builtin) CallReturn(env *Environment, args ...Any) (Any, error) {
 	if !f.variadic && len(args) != f.Arity() {

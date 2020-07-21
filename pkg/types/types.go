@@ -16,22 +16,31 @@ const (
 	STRING             = "string"
 )
 
-type Type struct {
-	name TypeName
+type Type interface {
+	Name() TypeName
+	Base() Type
 }
 
-func (t *Type) Name() TypeName { return t.name }
+type TypeDef struct {
+	name TypeName
+	base Type
+}
+
+var _ Type = (*TypeDef)(nil)
+
+func (t *TypeDef) Name() TypeName { return t.name }
+func (t *TypeDef) Base() Type     { return t.base }
 
 var (
-	Array     = &Type{name: ARRAY}
-	Bool      = &Type{name: BOOL}
-	Builtin   = &Type{name: BUILTIN}
-	Char      = &Type{name: CHAR}
-	Function  = &Type{name: FUNCTION}
-	Int       = &Type{name: INT}
-	Pointer   = &Type{name: POINTER}
-	Procedure = &Type{name: PROCEDURE}
-	Real      = &Type{name: REAL}
-	Record    = &Type{name: RECORD}
-	String    = &Type{name: STRING}
+	Array     = &TypeDef{name: ARRAY}
+	Bool      = &TypeDef{name: BOOL}
+	Builtin   = &TypeDef{name: BUILTIN}
+	Char      = &TypeDef{name: CHAR}
+	Function  = &TypeDef{name: FUNCTION}
+	Int       = &TypeDef{name: INT}
+	Pointer   = &TypeDef{name: POINTER}
+	Procedure = &TypeDef{name: PROCEDURE}
+	Real      = &TypeDef{name: REAL}
+	Record    = &TypeDef{name: RECORD}
+	String    = &TypeDef{name: STRING}
 )
