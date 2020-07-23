@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"fmt"
-	"runtime"
 	"yapsi/pkg/types"
 )
 
@@ -21,7 +20,6 @@ func unsupportedBinaryOpErr(op string, t1, t2 types.Type) error {
 }
 
 func undefinedIdentErr(ident string) error {
-	runtime.Breakpoint()
 	return fmt.Errorf("Variable %q is not defined", ident)
 }
 

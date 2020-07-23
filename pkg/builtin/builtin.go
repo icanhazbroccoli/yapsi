@@ -18,7 +18,7 @@ var WriteLn *object.Builtin = object.NewBuiltin(
 	},
 	true,
 	types.Int,
-	func(env *object.Environment, args ...object.Any) (object.Any, error) {
+	func(env *object.Environment, args ...types.Any) (types.Any, error) {
 		chunks := make([]string, 0, len(args))
 		for _, arg := range args {
 			chunks = append(chunks, arg.String())
@@ -38,14 +38,14 @@ var Len *object.Builtin = object.NewBuiltin(
 	},
 	false,
 	types.Int,
-	func(env *object.Environment, args ...object.Any) (object.Any, error) {
+	func(env *object.Environment, args ...types.Any) (types.Any, error) {
 		if len(args) != 1 {
 			return nil, fmt.Errorf("wrong number of arguments on len() call: given: %d, expected: %d",
 				len(args), 1)
 		}
 		arg := args[0]
 		switch ixbl := arg.(type) {
-		case object.Indexable:
+		case types.Indexable:
 			return &object.Integer{Value: int64(ixbl.Len())}, nil
 		default:
 			return nil, fmt.Errorf("object of non-indexable type %s does not support len()",

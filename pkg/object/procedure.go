@@ -14,7 +14,7 @@ type Procedure struct {
 	Body       *ast.BlockStmt
 }
 
-var _ (Any) = (*Function)(nil)
+var _ (types.Any) = (*Function)(nil)
 
 func (p *Procedure) Type() types.Type { return types.Procedure }
 func (p *Procedure) Arity() int       { return len(p.Params) }

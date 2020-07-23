@@ -1,9 +1,7 @@
-package object
-
-import "yapsi/pkg/types"
+package types
 
 type Any interface {
-	Type() types.Type
+	Type() Type
 	String() string
 }
 
@@ -20,14 +18,15 @@ type Arithmetic interface {
 
 type Comparable interface {
 	Any
-	OpEql(Any) (*Boolean, error)
-	OpNeql(Any) (*Boolean, error)
-	OpGt(Any) (*Boolean, error)
-	OpGte(Any) (*Boolean, error)
-	OpLt(Any) (*Boolean, error)
-	OpLte(Any) (*Boolean, error)
+	OpEql(Any) (Any, error)
+	OpNeql(Any) (Any, error)
+	OpGt(Any) (Any, error)
+	OpGte(Any) (Any, error)
+	OpLt(Any) (Any, error)
+	OpLte(Any) (Any, error)
 }
 
+/*
 type Callable interface {
 	Any
 	Arity() int
@@ -36,6 +35,7 @@ type Callable interface {
 	Call(*Environment, ...Any) error
 	CallReturn(*Environment, ...Any) (Any, error)
 }
+*/
 
 type Logical interface {
 	Any

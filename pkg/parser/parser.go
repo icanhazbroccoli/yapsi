@@ -271,7 +271,7 @@ func (p *Parser) parseSimpleTypeDefinitionExpr() (ast.TypeDefinitionExprIntf, er
 
 	return &ast.SimpleTypeDefinitionExpr{
 		Token:      tok,
-		Identifier: left,
+		Identifier: left.(*ast.IdentifierExpr),
 	}, nil
 }
 

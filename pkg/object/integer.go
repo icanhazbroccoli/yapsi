@@ -10,24 +10,24 @@ type Integer struct {
 	Value int64
 }
 
-var _ Arithmetic = (*Integer)(nil)
-var _ Comparable = (*Integer)(nil)
+var _ types.Arithmetic = (*Integer)(nil)
+var _ types.Comparable = (*Integer)(nil)
 
 func (i *Integer) Type() types.Type { return types.Int }
 
 func (i *Integer) String() string { return fmt.Sprintf("%d", i.Value) }
 
-func (i *Integer) OpUnPlus() (Any, error) {
+func (i *Integer) OpUnPlus() (types.Any, error) {
 	return i, nil
 }
 
-func (i *Integer) OpUnMinus() (Any, error) {
+func (i *Integer) OpUnMinus() (types.Any, error) {
 	return &Integer{
 		Value: -i.Value,
 	}, nil
 }
 
-func (i *Integer) OpPlus(o Any) (Any, error) {
+func (i *Integer) OpPlus(o types.Any) (types.Any, error) {
 	switch i2 := o.(type) {
 	case *Integer:
 		return &Integer{
@@ -38,7 +38,7 @@ func (i *Integer) OpPlus(o Any) (Any, error) {
 	}
 }
 
-func (i *Integer) OpMinus(o Any) (Any, error) {
+func (i *Integer) OpMinus(o types.Any) (types.Any, error) {
 	switch i2 := o.(type) {
 	case *Integer:
 		return &Integer{
@@ -49,7 +49,7 @@ func (i *Integer) OpMinus(o Any) (Any, error) {
 	}
 }
 
-func (i *Integer) OpAsterisk(o Any) (Any, error) {
+func (i *Integer) OpAsterisk(o types.Any) (types.Any, error) {
 	switch i2 := o.(type) {
 	case *Integer:
 		return &Integer{
@@ -60,7 +60,7 @@ func (i *Integer) OpAsterisk(o Any) (Any, error) {
 	}
 }
 
-func (i *Integer) OpSlash(o Any) (Any, error) {
+func (i *Integer) OpSlash(o types.Any) (types.Any, error) {
 	switch i2 := o.(type) {
 	case *Integer:
 		return &Integer{
@@ -71,7 +71,7 @@ func (i *Integer) OpSlash(o Any) (Any, error) {
 	}
 }
 
-func (i *Integer) OpPercent(o Any) (Any, error) {
+func (i *Integer) OpPercent(o types.Any) (types.Any, error) {
 	switch i2 := o.(type) {
 	case *Integer:
 		return &Integer{
@@ -82,7 +82,7 @@ func (i *Integer) OpPercent(o Any) (Any, error) {
 	}
 }
 
-func (i *Integer) OpEql(o Any) (*Boolean, error) {
+func (i *Integer) OpEql(o types.Any) (types.Any, error) {
 	switch i2 := o.(type) {
 	case *Integer:
 		return &Boolean{
@@ -93,7 +93,7 @@ func (i *Integer) OpEql(o Any) (*Boolean, error) {
 	}
 }
 
-func (i *Integer) OpNeql(o Any) (*Boolean, error) {
+func (i *Integer) OpNeql(o types.Any) (types.Any, error) {
 	switch i2 := o.(type) {
 	case *Integer:
 		return &Boolean{
@@ -104,7 +104,7 @@ func (i *Integer) OpNeql(o Any) (*Boolean, error) {
 	}
 }
 
-func (i *Integer) OpGt(o Any) (*Boolean, error) {
+func (i *Integer) OpGt(o types.Any) (types.Any, error) {
 	switch i2 := o.(type) {
 	case *Integer:
 		return &Boolean{
@@ -115,7 +115,7 @@ func (i *Integer) OpGt(o Any) (*Boolean, error) {
 	}
 }
 
-func (i *Integer) OpGte(o Any) (*Boolean, error) {
+func (i *Integer) OpGte(o types.Any) (types.Any, error) {
 	switch i2 := o.(type) {
 	case *Integer:
 		return &Boolean{
@@ -126,7 +126,7 @@ func (i *Integer) OpGte(o Any) (*Boolean, error) {
 	}
 }
 
-func (i *Integer) OpLt(o Any) (*Boolean, error) {
+func (i *Integer) OpLt(o types.Any) (types.Any, error) {
 	switch i2 := o.(type) {
 	case *Integer:
 		return &Boolean{
@@ -137,7 +137,7 @@ func (i *Integer) OpLt(o Any) (*Boolean, error) {
 	}
 }
 
-func (i *Integer) OpLte(o Any) (*Boolean, error) {
+func (i *Integer) OpLte(o types.Any) (types.Any, error) {
 	switch i2 := o.(type) {
 	case *Integer:
 		return &Boolean{

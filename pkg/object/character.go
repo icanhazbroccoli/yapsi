@@ -6,18 +6,18 @@ type Character struct {
 	Value rune
 }
 
-var _ (Arithmetic) = (*Character)(nil)
-var _ (Comparable) = (*Character)(nil)
+var _ (types.Arithmetic) = (*Character)(nil)
+var _ (types.Comparable) = (*Character)(nil)
 
 func (c *Character) Type() types.Type { return types.Char }
 
 func (c *Character) String() string { return string([]rune{c.Value}) }
 
-func (c *Character) OpUnPlus() (Any, error) {
+func (c *Character) OpUnPlus() (types.Any, error) {
 	return c, nil
 }
 
-func (c *Character) OpPlus(o Any) (Any, error) {
+func (c *Character) OpPlus(o types.Any) (types.Any, error) {
 	switch c2 := o.(type) {
 	case *Character:
 		return &Character{
@@ -32,7 +32,7 @@ func (c *Character) OpPlus(o Any) (Any, error) {
 	}
 }
 
-func (c *Character) OpMinus(o Any) (Any, error) {
+func (c *Character) OpMinus(o types.Any) (types.Any, error) {
 	switch c2 := o.(type) {
 	case *Character:
 		return &Character{
@@ -47,7 +47,7 @@ func (c *Character) OpMinus(o Any) (Any, error) {
 	}
 }
 
-func (c *Character) OpEql(o Any) (*Boolean, error) {
+func (c *Character) OpEql(o types.Any) (types.Any, error) {
 	switch c2 := o.(type) {
 	case *Character:
 		return &Boolean{
@@ -62,7 +62,7 @@ func (c *Character) OpEql(o Any) (*Boolean, error) {
 	}
 }
 
-func (c *Character) OpNeql(o Any) (*Boolean, error) {
+func (c *Character) OpNeql(o types.Any) (types.Any, error) {
 	switch c2 := o.(type) {
 	case *Character:
 		return &Boolean{
@@ -77,7 +77,7 @@ func (c *Character) OpNeql(o Any) (*Boolean, error) {
 	}
 }
 
-func (c *Character) OpGt(o Any) (*Boolean, error) {
+func (c *Character) OpGt(o types.Any) (types.Any, error) {
 	switch c2 := o.(type) {
 	case *Character:
 		return &Boolean{
@@ -92,7 +92,7 @@ func (c *Character) OpGt(o Any) (*Boolean, error) {
 	}
 }
 
-func (c *Character) OpGte(o Any) (*Boolean, error) {
+func (c *Character) OpGte(o types.Any) (types.Any, error) {
 	switch c2 := o.(type) {
 	case *Character:
 		return &Boolean{
@@ -107,7 +107,7 @@ func (c *Character) OpGte(o Any) (*Boolean, error) {
 	}
 }
 
-func (c *Character) OpLt(o Any) (*Boolean, error) {
+func (c *Character) OpLt(o types.Any) (types.Any, error) {
 	switch c2 := o.(type) {
 	case *Character:
 		return &Boolean{
@@ -122,7 +122,7 @@ func (c *Character) OpLt(o Any) (*Boolean, error) {
 	}
 }
 
-func (c *Character) OpLte(o Any) (*Boolean, error) {
+func (c *Character) OpLte(o types.Any) (types.Any, error) {
 	switch c2 := o.(type) {
 	case *Character:
 		return &Boolean{
@@ -137,7 +137,9 @@ func (c *Character) OpLte(o Any) (*Boolean, error) {
 	}
 }
 
-func (c *Character) OpUnMinus() (Any, error)     { return nil, UnsupTypOpErr(c.Type(), "-") }
-func (c *Character) OpAsterisk(Any) (Any, error) { return nil, UnsupTypOpErr(c.Type(), "*") }
-func (c *Character) OpSlash(Any) (Any, error)    { return nil, UnsupTypOpErr(c.Type(), "/") }
-func (c *Character) OpPercent(Any) (Any, error)  { return nil, UnsupTypOpErr(c.Type(), "%") }
+func (c *Character) OpUnMinus() (types.Any, error) { return nil, UnsupTypOpErr(c.Type(), "-") }
+func (c *Character) OpAsterisk(types.Any) (types.Any, error) {
+	return nil, UnsupTypOpErr(c.Type(), "*")
+}
+func (c *Character) OpSlash(types.Any) (types.Any, error)   { return nil, UnsupTypOpErr(c.Type(), "/") }
+func (c *Character) OpPercent(types.Any) (types.Any, error) { return nil, UnsupTypOpErr(c.Type(), "%") }

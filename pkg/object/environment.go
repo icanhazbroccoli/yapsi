@@ -37,7 +37,7 @@ func (e *Environment) DeclareType(name types.TypeName, t types.Type) error {
 	return nil
 }
 
-func (e *Environment) LookupVar(name VarName) (Any, bool) {
+func (e *Environment) LookupVar(name VarName) (types.Any, bool) {
 	ptr := e
 	for ptr != nil {
 		if lookup, ok := ptr.vars[name]; ok {
@@ -56,7 +56,7 @@ func (e *Environment) DeclareVar(name VarName, t types.Type) error {
 	return nil
 }
 
-func (e *Environment) AssignVar(name VarName, value Any) error {
+func (e *Environment) AssignVar(name VarName, value types.Any) error {
 	if _, ok := e.vars[name]; !ok {
 		return fmt.Errorf("Undefined variable: %s", name)
 	}
@@ -66,7 +66,7 @@ func (e *Environment) AssignVar(name VarName, value Any) error {
 	return nil
 }
 
-func (e *Environment) DeclareAssignVar(name VarName, value Any) error {
+func (e *Environment) DeclareAssignVar(name VarName, value types.Any) error {
 	if err := e.DeclareVar(name, value.Type()); err != nil {
 		return err
 	}

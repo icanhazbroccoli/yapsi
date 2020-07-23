@@ -10,21 +10,21 @@ type Real struct {
 	Value float64
 }
 
-var _ Arithmetic = (*Real)(nil)
-var _ Comparable = (*Real)(nil)
+var _ types.Arithmetic = (*Real)(nil)
+var _ types.Comparable = (*Real)(nil)
 
 func (r *Real) Type() types.Type { return types.Real }
 func (r *Real) String() string   { return fmt.Sprintf("%f", r.Value) }
 
-func (r *Real) OpUnPlus() (Any, error) { return r, nil }
+func (r *Real) OpUnPlus() (types.Any, error) { return r, nil }
 
-func (r *Real) OpUnMinus() (Any, error) {
+func (r *Real) OpUnMinus() (types.Any, error) {
 	return &Real{
 		Value: -r.Value,
 	}, nil
 }
 
-func (r *Real) OpPlus(o Any) (Any, error) {
+func (r *Real) OpPlus(o types.Any) (types.Any, error) {
 	switch r2 := o.(type) {
 	case *Real:
 		return &Real{
@@ -35,7 +35,7 @@ func (r *Real) OpPlus(o Any) (Any, error) {
 	}
 }
 
-func (r *Real) OpMinus(o Any) (Any, error) {
+func (r *Real) OpMinus(o types.Any) (types.Any, error) {
 	switch r2 := o.(type) {
 	case *Real:
 		return &Real{
@@ -46,7 +46,7 @@ func (r *Real) OpMinus(o Any) (Any, error) {
 	}
 }
 
-func (r *Real) OpAsterisk(o Any) (Any, error) {
+func (r *Real) OpAsterisk(o types.Any) (types.Any, error) {
 	switch r2 := o.(type) {
 	case *Real:
 		return &Real{
@@ -57,7 +57,7 @@ func (r *Real) OpAsterisk(o Any) (Any, error) {
 	}
 }
 
-func (r *Real) OpSlash(o Any) (Any, error) {
+func (r *Real) OpSlash(o types.Any) (types.Any, error) {
 	switch r2 := o.(type) {
 	case *Real:
 		return &Real{
@@ -68,7 +68,7 @@ func (r *Real) OpSlash(o Any) (Any, error) {
 	}
 }
 
-func (r *Real) OpEql(o Any) (*Boolean, error) {
+func (r *Real) OpEql(o types.Any) (types.Any, error) {
 	switch r2 := o.(type) {
 	case *Real:
 		return &Boolean{
@@ -79,7 +79,7 @@ func (r *Real) OpEql(o Any) (*Boolean, error) {
 	}
 }
 
-func (r *Real) OpNeql(o Any) (*Boolean, error) {
+func (r *Real) OpNeql(o types.Any) (types.Any, error) {
 	switch r2 := o.(type) {
 	case *Real:
 		return &Boolean{
@@ -90,7 +90,7 @@ func (r *Real) OpNeql(o Any) (*Boolean, error) {
 	}
 }
 
-func (r *Real) OpGt(o Any) (*Boolean, error) {
+func (r *Real) OpGt(o types.Any) (types.Any, error) {
 	switch r2 := o.(type) {
 	case *Real:
 		return &Boolean{
@@ -101,7 +101,7 @@ func (r *Real) OpGt(o Any) (*Boolean, error) {
 	}
 }
 
-func (r *Real) OpGte(o Any) (*Boolean, error) {
+func (r *Real) OpGte(o types.Any) (types.Any, error) {
 	switch r2 := o.(type) {
 	case *Real:
 		return &Boolean{
@@ -112,7 +112,7 @@ func (r *Real) OpGte(o Any) (*Boolean, error) {
 	}
 }
 
-func (r *Real) OpLt(o Any) (*Boolean, error) {
+func (r *Real) OpLt(o types.Any) (types.Any, error) {
 	switch r2 := o.(type) {
 	case *Real:
 		return &Boolean{
@@ -123,7 +123,7 @@ func (r *Real) OpLt(o Any) (*Boolean, error) {
 	}
 }
 
-func (r *Real) OpLte(o Any) (*Boolean, error) {
+func (r *Real) OpLte(o types.Any) (types.Any, error) {
 	switch r2 := o.(type) {
 	case *Real:
 		return &Boolean{
@@ -134,4 +134,6 @@ func (r *Real) OpLte(o Any) (*Boolean, error) {
 	}
 }
 
-func (r *Real) OpPercent(o Any) (Any, error) { return nil, UnsupTypOpErr(r.Type(), "%") }
+func (r *Real) OpPercent(o types.Any) (types.Any, error) {
+	return nil, UnsupTypOpErr(r.Type(), "%")
+}

@@ -15,7 +15,7 @@ type Function struct {
 	Body       *ast.BlockStmt
 }
 
-var _ (Any) = (*Function)(nil)
+var _ (types.Any) = (*Function)(nil)
 
 func (f *Function) Type() types.Type { return types.Function }
 func (f *Function) Arity() int       { return len(f.Params) }

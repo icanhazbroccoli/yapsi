@@ -9,6 +9,7 @@ import (
 	test_helper "yapsi/pkg/internal/test"
 	"yapsi/pkg/object"
 	"yapsi/pkg/token"
+	"yapsi/pkg/types"
 )
 
 func TestVisitNumericLiteral(t *testing.T) {
@@ -133,12 +134,13 @@ func TestVisitSimpleTypeDefinitionExpr(t *testing.T) {
 					Value: "integer",
 				},
 			},
-			wantRes: nil,
+			wantRes: types.Int,
 		},
 	}
 
 	for _, tt := range tests {
 		env := object.NewEnvironment(nil)
+		declareBaseTypes(env)
 		i := &Interpreter{env}
 		res, err := i.VisitSimpleTypeDefinitionExpr(tt.input)
 		assert.Equal(t, tt.wantErr, err)

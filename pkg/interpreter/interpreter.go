@@ -79,15 +79,15 @@ func (i *Interpreter) VisitUnaryExpr(node *ast.UnaryExpr) (ast.VisitorResult, er
 	}
 	switch node.Operator.Literal {
 	case "not":
-		if lg, ok := expr.(object.Logical); ok {
+		if lg, ok := expr.(types.Logical); ok {
 			return lg.OpNot()
 		}
 	case "-":
-		if ar, ok := expr.(object.Arithmetic); ok {
+		if ar, ok := expr.(types.Arithmetic); ok {
 			return ar.OpUnMinus()
 		}
 	case "+":
-		if ar, ok := expr.(object.Arithmetic); ok {
+		if ar, ok := expr.(types.Arithmetic); ok {
 			return ar.OpUnPlus()
 		}
 	}
@@ -103,59 +103,59 @@ func (i *Interpreter) VisitBinaryExpr(node *ast.BinaryExpr) (ast.VisitorResult, 
 	if err != nil {
 		return nil, err
 	}
-	left, right := lr.(object.Any), rr.(object.Any)
+	left, right := lr.(types.Any), rr.(types.Any)
 	switch node.Operator.Literal {
 	case "+":
-		if ar, ok := left.(object.Arithmetic); ok {
-			return ar.OpPlus(right.(object.Any))
+		if ar, ok := left.(types.Arithmetic); ok {
+			return ar.OpPlus(right.(types.Any))
 		}
 	case "-":
-		if ar, ok := left.(object.Arithmetic); ok {
-			return ar.OpMinus(right.(object.Any))
+		if ar, ok := left.(types.Arithmetic); ok {
+			return ar.OpMinus(right.(types.Any))
 		}
 	case "*":
-		if ar, ok := left.(object.Arithmetic); ok {
-			return ar.OpAsterisk(right.(object.Any))
+		if ar, ok := left.(types.Arithmetic); ok {
+			return ar.OpAsterisk(right.(types.Any))
 		}
 	case "/":
-		if ar, ok := left.(object.Arithmetic); ok {
-			return ar.OpSlash(right.(object.Any))
+		if ar, ok := left.(types.Arithmetic); ok {
+			return ar.OpSlash(right.(types.Any))
 		}
 	case "%":
-		if ar, ok := left.(object.Arithmetic); ok {
-			return ar.OpPercent(right.(object.Any))
+		if ar, ok := left.(types.Arithmetic); ok {
+			return ar.OpPercent(right.(types.Any))
 		}
 	case "=":
-		if cp, ok := left.(object.Comparable); ok {
-			return cp.OpEql(right.(object.Any))
+		if cp, ok := left.(types.Comparable); ok {
+			return cp.OpEql(right.(types.Any))
 		}
 	case "<>":
-		if cp, ok := left.(object.Comparable); ok {
-			return cp.OpNeql(right.(object.Any))
+		if cp, ok := left.(types.Comparable); ok {
+			return cp.OpNeql(right.(types.Any))
 		}
 	case ">":
-		if cp, ok := left.(object.Comparable); ok {
-			return cp.OpGt(right.(object.Any))
+		if cp, ok := left.(types.Comparable); ok {
+			return cp.OpGt(right.(types.Any))
 		}
 	case ">=":
-		if cp, ok := left.(object.Comparable); ok {
-			return cp.OpGte(right.(object.Any))
+		if cp, ok := left.(types.Comparable); ok {
+			return cp.OpGte(right.(types.Any))
 		}
 	case "<":
-		if cp, ok := left.(object.Comparable); ok {
-			return cp.OpLt(right.(object.Any))
+		if cp, ok := left.(types.Comparable); ok {
+			return cp.OpLt(right.(types.Any))
 		}
 	case "<=":
-		if cp, ok := left.(object.Comparable); ok {
-			return cp.OpLte(right.(object.Any))
+		if cp, ok := left.(types.Comparable); ok {
+			return cp.OpLte(right.(types.Any))
 		}
 	case "and":
-		if lg, ok := left.(object.Logical); ok {
-			return lg.OpAnd(right.(object.Any))
+		if lg, ok := left.(types.Logical); ok {
+			return lg.OpAnd(right.(types.Any))
 		}
 	case "or":
-		if lg, ok := left.(object.Logical); ok {
-			return lg.OpOr(right.(object.Any))
+		if lg, ok := left.(types.Logical); ok {
+			return lg.OpOr(right.(types.Any))
 		}
 	}
 	return nil, unsupportedBinaryOpErr(node.Operator.Literal, left.Type(), right.Type())
@@ -213,7 +213,7 @@ func (i *Interpreter) VisitAssignmentStmt(node *ast.AssignmentStmt) (ast.Visitor
 	if err != nil {
 		return nil, err
 	}
-	value, ok := r.(object.Any)
+	value, ok := r.(types.Any)
 	if !ok {
 		return nil, unexpectedVisitorResultTypeErr(r, "object.Any")
 	}
@@ -233,19 +233,19 @@ func (i *Interpreter) VisitLabeledStmt(node *ast.LabeledStmt) (ast.VisitorResult
 	return node.Stmt.Visit(i)
 }
 
-func (i *Interpreter) evaluateArgs(in []ast.Expression) ([]object.Any, error) {
-	out := make([]object.Any, 0, len(in))
+func (i *Interpreter) evaluateArgs(in []ast.Expression) ([]types.Any, error) {
+	out := make([]types.Any, 0, len(in))
 	for _, arg := range in {
 		value, err := arg.Visit(i)
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, value.(object.Any))
+		out = append(out, value.(types.Any))
 	}
 	return out, nil
 }
 
-func (i *Interpreter) newEnvWithParams(formal []*object.Variable, actual []object.Any) (*object.Environment, error) {
+func (i *Interpreter) newEnvWithParams(formal []*object.Variable, actual []types.Any) (*object.Environment, error) {
 	env := object.NewEnvironment(i.env)
 	if len(formal) != len(actual) {
 		return nil, wrongCallableArgLenErr(len(formal), len(actual))
@@ -485,16 +485,29 @@ func (i *Interpreter) VisitProcedureDeclStmt(node *ast.ProcedureDeclStmt) (ast.V
 }
 
 func (i *Interpreter) VisitSimpleTypeDefinitionExpr(node *ast.SimpleTypeDefinitionExpr) (ast.VisitorResult, error) {
-	ident := node.Identifier.Value
-	typ, ok := i.env.LookupType(types.TypeName(ident))
+	ident := node.Identifier
+	typ, ok := i.env.LookupType(types.TypeName(ident.Value))
 	if !ok {
-		return nil, undefinedRefTypeErr(ident)
+		return nil, undefinedRefTypeErr(ident.Value)
 	}
 	return typ, nil
 }
 
-func (i *Interpreter) VisitSubrangeTypeDefinitionExpr(*ast.SubrangeTypeDefinitionExpr) (ast.VisitorResult, error) {
-	panic("not implemented")
+func (i *Interpreter) VisitSubrangeTypeDefinitionExpr(node *ast.SubrangeTypeDefinitionExpr) (ast.VisitorResult, error) {
+	lr, err := node.Left.Visit(i)
+	if err != nil {
+		return nil, err
+	}
+	rr, err := node.Right.Visit(i)
+	if err != nil {
+		return nil, err
+	}
+	left := lr.(types.Any)
+	right := rr.(types.Any)
+	if err := assertTypeEqual(left.Type(), right.Type()); err != nil {
+		return nil, err
+	}
+	return types.NewSubrangeType(left, right), nil
 }
 
 func (i *Interpreter) VisitArrayTypeDefinitionExpr(*ast.ArrayTypeDefinitionExpr) (ast.VisitorResult, error) {

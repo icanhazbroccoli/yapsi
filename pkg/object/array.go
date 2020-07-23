@@ -7,12 +7,12 @@ import (
 )
 
 type Array struct {
-	left, right Arithmetic
+	left, right types.Arithmetic
 	it, ct      types.Type
-	values      []Any
+	values      []types.Any
 }
 
-var _ Indexable = (*Array)(nil)
+var _ types.Indexable = (*Array)(nil)
 
 func (a *Array) Type() types.Type { return types.Array }
 func (a *Array) Len() int         { return len(a.values) }
@@ -25,7 +25,7 @@ func (a *Array) String() string {
 	return "[" + strings.Join(chunks, ", ") + "]"
 }
 
-func NewArray(l, r Arithmetic, it, ct types.Type) (*Array, error) {
+func NewArray(l, r types.Arithmetic, it, ct types.Type) (*Array, error) {
 	a := &Array{
 		left:  l,
 		right: r,
@@ -44,11 +44,11 @@ func NewArray(l, r Arithmetic, it, ct types.Type) (*Array, error) {
 	if length < 0 {
 		return nil, arrWrongRangeConstraintErr(l, r)
 	}
-	a.values = make([]Any, length)
+	a.values = make([]types.Any, length)
 	return a, nil
 }
 
-func (a *Array) OpSubscrGet(ix Arithmetic) (Any, error) {
+func (a *Array) OpSubscrGet(ix types.Arithmetic) (types.Any, error) {
 	i, err := a.convIdx(ix)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (a *Array) OpSubscrGet(ix Arithmetic) (Any, error) {
 	return a.values[i], nil
 }
 
-func (a *Array) OpSubscrSet(ix Arithmetic, v Any) error {
+func (a *Array) OpSubscrSet(ix types.Arithmetic, v types.Any) error {
 	i, err := a.convIdx(ix)
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func (a *Array) OpSubscrSet(ix Arithmetic, v Any) error {
 	return nil
 }
 
-func (a *Array) convIdx(ix Arithmetic) (int, error) {
+func (a *Array) convIdx(ix types.Arithmetic) (int, error) {
 	if ix.Type() != a.it {
 		return -1, arrWrongIndexTypeErr(ix.Type(), a.it)
 	}

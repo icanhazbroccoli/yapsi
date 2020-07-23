@@ -6,7 +6,7 @@ import (
 	"yapsi/pkg/types"
 )
 
-type BuiltinBody func(*Environment, ...Any) (Any, error)
+type BuiltinBody func(*Environment, ...types.Any) (types.Any, error)
 
 type Builtin struct {
 	params   []*Variable
@@ -15,7 +15,7 @@ type Builtin struct {
 	body     BuiltinBody
 }
 
-var _ Callable = (*Builtin)(nil)
+//var _ types.Callable = (*Builtin)(nil)
 
 func NewBuiltin(params []*Variable, variadic bool, returns types.Type, body BuiltinBody) *Builtin {
 	return &Builtin{
@@ -32,7 +32,7 @@ func (f *Builtin) IsVariadic() bool    { return f.variadic }
 func (f *Builtin) Returns() types.Type { return f.returns }
 func (f *Builtin) String() string      { return "(function)" }
 
-func (f *Builtin) CallReturn(env *Environment, args ...Any) (Any, error) {
+func (f *Builtin) CallReturn(env *Environment, args ...types.Any) (types.Any, error) {
 	if !f.variadic && len(args) != f.Arity() {
 		return nil, fmt.Errorf("Wrong number of arguments for non-variadic function: got %d, want: %d",
 			len(args), f.Arity())
@@ -41,6 +41,6 @@ func (f *Builtin) CallReturn(env *Environment, args ...Any) (Any, error) {
 	return f.body(localEnv, args...)
 }
 
-func (f *Builtin) Call(*Environment, ...Any) error {
+func (f *Builtin) Call(*Environment, ...types.Any) error {
 	panic("Builtins calls must be returnable; use `CallReturn` instead")
 }

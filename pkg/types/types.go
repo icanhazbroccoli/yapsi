@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 type TypeName string
 
 const (
@@ -44,3 +46,25 @@ var (
 	Record    = &TypeDef{name: RECORD}
 	String    = &TypeDef{name: STRING}
 )
+
+type SubrangeType struct {
+	left, right Any
+}
+
+var _ Type = (*SubrangeType)(nil)
+
+func NewSubrangeType(left, right Any) *SubrangeType {
+	return &SubrangeType{left, right}
+}
+
+func (t *SubrangeType) Name() TypeName {
+	base := t.Base()
+	return TypeName(
+		fmt.Sprintf("(%s)%v .. (%s)%v",
+			base, t.left,
+			base, t.right))
+}
+
+func (t *SubrangeType) Base() Type {
+	return t.left.Type()
+}
